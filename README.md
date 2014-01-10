@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 ##### Contents
 [Overview] (#overview)  
 [Copy right] (#copyright)  
@@ -61,10 +60,3 @@ AlignGraph: algorithm for secondary de novo genome assembly guided by closely re
 5. Outputs
    * Extended contigs or scaffolds in FASTA format.
    * Remaining contigs or scaffolds not extended in FASTA format.
-   
-=======
-AlignGraph
-==========
-
-algorithm for secondary de novo genome assembly guided by closely related references
->>>>>>> a91a02bb566c66d8397bfdb412743e317f1f41a3
