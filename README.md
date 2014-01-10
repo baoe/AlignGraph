@@ -38,7 +38,7 @@ AlignGraph: algorithm for secondary de novo genome assembly guided by closely re
    ```
    AlignGraph --read1 reads_1.fa --read2 reads_2.fa --contig contigs.fa --genome genome.fa --distanceLow distanceLow --distanceHigh distancehigh --extendedContig extendedContigs.fa --remainingContig remainingContigs.fa [--kMer k --insertVariation insertVariation --coverage coverage --noAlignment --part p --fastMap]
    ```
-
+   
    Inputs:
    --read1 is the the first pair of PE DNA reads in fasta format
    --read2 is the the second pair of PE DNA reads in fasta format
