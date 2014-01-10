@@ -42,13 +42,13 @@ AlignGraph: algorithm for secondary de novo genome assembly guided by closely re
    Inputs:  
    --read1 is the the first pair of PE DNA reads in fasta format.  
    --read2 is the the second pair of PE DNA reads in fasta format.  
-   --contig is the initial contigs in fasta format.  
+   --contig is the initial contigs/scaffolds in fasta format.  
    --genome is the reference genome in fasta format.  
    --distanceLow is the lower bound of alignment distance between the first and second pairs of PE DNA reads.  
    --distanceHigh is the upper bound of alignment distance between the first and second pairs of PE DNA reads.  
    Outputs:  
-   --extendedContig is the extended contig file in fasta format.  
-   --remainingContig is the not extended initial contig file in fasta format.  
+   --extendedContig is the extended contig/scaffold file in fasta format.  
+   --remainingContig is the not extended initial contig/scaffold file in fasta format.  
    Options:  
    --kMer is the k-mer size (default: 5).  
    --insertVariation is the standard variation of insert length (default: 100).  

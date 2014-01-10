@@ -3619,13 +3619,13 @@ void print()
 	cout << "Inputs:" << endl;
 	cout << "--read1 is the the first pair of PE DNA reads in fasta format" << endl;
 	cout << "--read2 is the the second pair of PE DNA reads in fasta format" << endl;
-	cout << "--contig is the initial contigs in fasta format" << endl;
+	cout << "--contig is the initial contigs/scaffolds in fasta format" << endl;
 	cout << "--genome is the reference genome in fasta format" << endl;
 	cout << "--distanceLow is the lower bound of alignment distance between the first and second pairs of PE DNA reads" << endl;
 	cout << "--distanceHigh is the upper bound of alignment distance between the first and second pairs of PE DNA reads" << endl;
 	cout << "Outputs:" << endl;
-	cout << "--extendedContig is the extended contig file in fasta format" << endl;
-	cout << "--remainingContig is the not extended initial contig file in fasta format" << endl;
+	cout << "--extendedContig is the extended contig/scaffold file in fasta format" << endl;
+	cout << "--remainingContig is the not extended initial contig/scaffold file in fasta format" << endl;
 	cout << "Options:" << endl;
 	cout << "--kMer is the k-mer size (default: 5)" << endl;
 	cout << "--insertVariation is the small variation of insert length (default: 50)" << endl;
