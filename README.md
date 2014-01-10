@@ -14,7 +14,7 @@ AlignGraph is under the [Artistic License 2.0](http://opensource.org/licenses/Ar
 
 <a name="cite"/>
 ### How to cite AlignGraph?
-If you use AlignGraph, please cite the following paper:
+If you use AlignGraph, please cite the following paper:  
 AlignGraph: algorithm for secondary de novo genome assembly guided by closely related references (submitted).
 
 <a name="manual"/>
