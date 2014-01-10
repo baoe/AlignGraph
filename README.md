@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 ##### Contents
 [Overview] (#overview)  
 [Copy right] (#copyright)  
@@ -40,31 +39,24 @@ AlignGraph: algorithm for secondary de novo genome assembly guided by closely re
    AlignGraph --read1 reads_1.fa --read2 reads_2.fa --contig contigs.fa --genome genome.fa --distanceLow distanceLow --distanceHigh distancehigh --extendedContig extendedContigs.fa --remainingContig remainingContigs.fa [--kMer k --insertVariation insertVariation --coverage coverage --noAlignment --part p --fastMap]
    ```
 
-   Inputs:
-   --read1 is the the first pair of PE DNA reads in fasta format
-   --read2 is the the second pair of PE DNA reads in fasta format
-   --contig is the initial contigs in fasta format
-   --genome is the reference genome in fasta format
-   --distanceLow is the lower bound of alignment distance between the first and second pairs of PE DNA reads
-   --distanceHigh is the upper bound of alignment distance between the first and second pairs of PE DNA reads
-   Outputs:
-   --extendedContig is the extended contig file in fasta format
-   --remainingContig is the not extended initial contig file in fasta format
-   Options:
-   --kMer is the k-mer size (default: 5)
-   --insertVariation is the standard variation of insert length (default: 100)
-   --coverage is the minimum coverage to keep a path in de Bruijn graph (default: 20)
-   --noAlignment skips the initial time-consuming alignment step, if all the alignment files have been provided in tmp directory (default: none)
-   --part is the number of parts a chromosome is divided into when it is loaded to reduce memory requirement (default: 1)
-   --fastMap makes BLAT alignment faster but may lower the performance of AlignGraph. Useful for large genomes (default: none)
+   Inputs:  
+   --read1 is the the first pair of PE DNA reads in fasta format.  
+   --read2 is the the second pair of PE DNA reads in fasta format.  
+   --contig is the initial contigs in fasta format.  
+   --genome is the reference genome in fasta format.  
+   --distanceLow is the lower bound of alignment distance between the first and second pairs of PE DNA reads.  
+   --distanceHigh is the upper bound of alignment distance between the first and second pairs of PE DNA reads.  
+   Outputs:  
+   --extendedContig is the extended contig file in fasta format.  
+   --remainingContig is the not extended initial contig file in fasta format.  
+   Options:  
+   --kMer is the k-mer size (default: 5).  
+   --insertVariation is the standard variation of insert length (default: 100).  
+   --coverage is the minimum coverage to keep a path in de Bruijn graph (default: 20).  
+   --noAlignment skips the initial time-consuming alignment step, if all the alignment files have been provided in tmp directory (default: none).  
+   --part is the number of parts a chromosome is divided into when it is loaded to reduce memory requirement (default: 1).  
+   --fastMap makes BLAT alignment faster but may lower the performance of AlignGraph. Useful for large genomes (default: none).  
 
 5. Outputs
    * Extended contigs or scaffolds in FASTA format.
    * Remaining contigs or scaffolds not extended in FASTA format.
-   
-=======
-AlignGraph
-==========
-
-algorithm for secondary de novo genome assembly guided by closely related references
->>>>>>> a91a02bb566c66d8397bfdb412743e317f1f41a3
