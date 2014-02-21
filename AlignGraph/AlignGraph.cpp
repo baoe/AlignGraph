@@ -11,19 +11,19 @@
 #include <time.h>
 using namespace std;
 
-//#define TEST
+#define TEST
 #define OPTIMIZATION
 
 #define MAX 99999
-#define INIT_CONTIG_THRESHOLD 0.5
-#define CONTIG_THRESHOLD 0.5
-#define THRESHOLD 0.6
-#define SD 5
-#define SI 5
+#define INIT_CONTIG_THRESHOLD 0.5//0
+#define CONTIG_THRESHOLD 0.5//0.1
+#define THRESHOLD 0.6//0.2
+#define SD 0//5
+#define SI 0//5
 #define BATCH 1000000// BATCH = 2n
 #define COVERAGE 10
 #define EP 5// 5, 20, 100, max
-#define LARGE_CHUNK 1000000
+#define LARGE_CHUNK 1000000//20000
 #define SMALL_CHUNK 20000
 
 typedef struct structSegment
@@ -35,6 +35,7 @@ typedef struct structSegment
 
 typedef struct contiMerStruct
 {
+	char nucleotide;
         unsigned int contigID;
         unsigned int contigOffset;
         //unsigned int previousID;
@@ -78,6 +79,7 @@ typedef struct kMerStruct
 //      unsigned int previousOffset;
 //      unsigned int previousItem;
         int coverage;
+	int A, C, G, T, N;
 } KMer;
 
 typedef struct baseStruct
@@ -284,7 +286,7 @@ void loadGenome(vector<vector<Base> > & genome, int chromosomeID)
 	}
 	else
 	{
-		cout << "CANNOT OPEN FILE" << endl;
+		cout << "CANNOT OPEN FILE!" << endl;
 		exit(-1);
 	}
 }
@@ -327,7 +329,7 @@ void loadSeq(ifstream & in, vector<Seq> & seqs)
 				for(i = 0; i < buf.size(); i ++)
 					if(buf[i] == '.')
 						break;
-					s.ID = atoi(buf.substr(i + 1, buf.size()).c_str());
+				s.ID = atoi(buf.substr(i + 1, buf.size()).c_str());
                                 seqs.push_back(s);
 			}
                         else
@@ -339,7 +341,7 @@ void loadSeq(ifstream & in, vector<Seq> & seqs)
         }
         else
         {
-                cout << "CANNOT OPEN FILE" << endl;
+                cout << "CANNOT OPEN FILE!" << endl;
                 exit(-1);
         }
 }
@@ -384,7 +386,7 @@ int loadSeq(ifstream & in, vector<Seq> & seqs, int & aliStartID, int & seqStartI
 	}
 	else
 	{
-		cout << "CANNOT OPEN FILE" << endl;
+		cout << "CANNOT OPEN FILE!" << endl;
 		exit(-1);
 	}
 
@@ -403,6 +405,7 @@ int parseBLAT(string buf, unsigned int & targetID, unsigned int & targetStart, u
         char targetIDBuf[100] = {'\0'}, targetStartBuf[100] = {'\0'}, targetEndBuf[100] = {'\0'}, targetGapBuf[100] = {'\0'}, sourceIDBuf[100] = {'\0'}, sourceStartBuf[100] = {'\0'}, sourceEndBuf[100] = {'\0'}, sourceGapBuf[100] = {'\0'}, sourceSizeBuf[100] = {'\0'}, blockBuf[100] = {'\0'}, targetSizeBuf[100] = {'\0'}, realSourceIDBuf[100] = {'\0'}, realBuf[100] = {'\0'};
         int item = 0, i, j0 = 0, j1 = 0, j2 = 0, j3 = 0, j4 = 0, j5 = 0, j6 = 0, j7 = 0, j8 = 0, j9 = 0, j, k, sp, j10 = 0, j11 = 0, j12 = 0;
         Segment s;
+	fr = -1;
 
         seg.clear();
 
@@ -476,7 +479,7 @@ int parseBLAT(string buf, unsigned int & targetID, unsigned int & targetStart, u
                         else
                                 blockBuf[j9 ++] = buf[i];
                 }
-                if(item == 8)
+                if(item == 8 && fr == -1)
                         fr = buf[i] == '+' ? 0 : 1;
 		if(item == 14)
                         targetSizeBuf[j10 ++] = buf[i];
@@ -645,7 +648,7 @@ void loadContiAli(ifstream & ca, vector<Seq> & contigs, int chromosomeID)
 	}
 	else
 	{
-		cout << "CANNOT OPEN FILE" << endl;
+		cout << "CANNOT OPEN FILE!" << endl;
 		exit(-1);
 	}
 
@@ -726,6 +729,7 @@ void updateGenomeWithContig(vector<Seq> & seqs, vector<vector<Base> > & genome, 
 	Base b;
 	ContiMer p, q;
 	KMer k;
+	char nucleotide;
 
 	previousIDBak = previousOffsetBak = previousItemBak = -1;
 	for(sp = 0; sp < seqs.size(); sp ++)
@@ -777,6 +781,7 @@ cont:
 					nextID = seqs[sp].positionSets[pp][ppp + 1].chromosomeID;
 					nextOffset = seqs[sp].positionSets[pp][ppp + 1].chromosomeOffset;
 //					nextItem = genome[nextID][nextOffset].nextPosition.size();
+					nucleotide = seqs[sp].nucleotides[ppp];
 					if(nextID == -1)// insertion to genome
 					{
 						for(npp = ppp + 2; npp < seqs[sp].positionSets[pp].size(); npp ++)
@@ -798,6 +803,7 @@ cont:
 										p.nextItem = genome[p.nextID][p.nextOffset].contiMer.size();
 										p.contigID = sp;
 										p.contigOffset = ppp;
+										p.nucleotide = nucleotide;
 										genome[chromosomeID][chromosomeOffset].contiMer.push_back(p);
 
 										previousIDBak = chromosomeID;
@@ -821,6 +827,7 @@ cont:
 									p.nextItem = 0;
 									p.contigID = sp;
 									p.contigOffset = ppp;
+									p.nucleotide = nucleotide;
 									genome[chromosomeID][chromosomeOffset].contiMer.push_back(p);
 									previousIDBak = chromosomeID;
 									previousOffsetBak = chromosomeOffset;
@@ -841,6 +848,7 @@ cont:
 										p.nextItem = 0;
 										p.contigID = sp;
 										p.contigOffset = ppp + 1 + i;
+										p.nucleotide = b.nucleotide;
 										b.contiMer.push_back(p);
 
 										previousIDBak = chromosomeID;
@@ -862,6 +870,7 @@ cont:
 									p.nextItem = genome[p.nextID][p.nextOffset].contiMer.size();
 									p.contigID = sp;
 									p.contigOffset = npp - 1;
+									p.nucleotide = b.nucleotide;
 									b.contiMer.push_back(p);
 
 									previousIDBak = chromosomeID;
@@ -894,6 +903,8 @@ cont:
 								p.nextItem = genome[p.nextID][p.nextOffset].contiMer.size();
 								p.contigID = sp;
 								p.contigOffset = ppp;
+								if(cpp == chromosomeOffset) p.nucleotide = nucleotide;
+								else p.nucleotide = genome[chromosomeID][cpp].nucleotide;
 								genome[chromosomeID][cpp].contiMer.push_back(p);
 
 								previousIDBak = chromosomeID;
@@ -917,6 +928,7 @@ cont:
 							p.nextItem = genome[p.nextID][p.nextOffset].contiMer.size();
 							p.contigID = sp;
 							p.contigOffset = ppp;
+							p.nucleotide = nucleotide;
 							genome[chromosomeID][chromosomeOffset].contiMer.push_back(p);
 
 							previousIDBak = chromosomeID;
@@ -939,6 +951,7 @@ cont:
 						p.nextItem = genome[p.nextID][p.nextOffset].contiMer.size();
 						p.contigID = sp;
 						p.contigOffset = ppp;
+						p.nucleotide = nucleotide;
 						genome[chromosomeID][chromosomeOffset].contiMer.push_back(p);
 						previousIDBak = chromosomeID;
 						previousOffsetBak = chromosomeOffset;
@@ -958,6 +971,7 @@ cont:
 				p.nextID = p.nextOffset = p.nextItem = -1;
 				p.contigID = sp;
 				p.contigOffset = ppp;
+				p.nucleotide = genome[nextID][nextOffset].nucleotide;
 				genome[nextID][nextOffset].contiMer.push_back(p);
 
 				//k.contigOffset = k.contigOffset0 = k.chromosomeID0 = k.chromosomeOffset0 = -1;
@@ -971,6 +985,7 @@ cont:
 				p.nextID = p.nextOffset = p.nextItem = -1;
 				p.contigID = sp;
 				p.contigOffset = ppp;
+				p.nucleotide = genome[chromosomeID][chromosomeOffset].nucleotide;
 				genome[chromosomeID][chromosomeOffset].contiMer.push_back(p);
 
 				//k.contigOffset = k.contigOffset0 = k.chromosomeID0 = k.chromosomeOffset0 = -1;
@@ -1067,6 +1082,7 @@ int loadReadAli(ifstream & ra, vector<Seq> & reads, int & aliStartID, int & seqS
 	unsigned int targetID1, targetStart1, targetEnd1, targetGap1, sourceID1, sourceStart1, sourceEnd1, sourceGap1, sourceSize1, fr1, targetID2, targetStart2, targetEnd2, targetGap2, sourceID2, sourceStart2, sourceEnd2, sourceGap2, sourceSize2, fr2;
 	vector<Segment> segs1, segs2;
 	int gp, cpp, pp;
+	int count = 0;
 
 	sourceIDBak = -1;
 	if(ra.is_open())
@@ -1096,6 +1112,7 @@ int loadReadAli(ifstream & ra, vector<Seq> & reads, int & aliStartID, int & seqS
 			{
 				updateContig(reads, (sourceID1 - aliStartID) * 2, targetID1, segs1, fr1, THRESHOLD);
 				updateContig(reads, (sourceID2 - aliStartID) * 2 + 1, targetID2, segs2, fr2, THRESHOLD);
+				count ++;
 			}
 			segs1.clear();
 			segs2.clear();
@@ -1104,7 +1121,7 @@ int loadReadAli(ifstream & ra, vector<Seq> & reads, int & aliStartID, int & seqS
 	}
 	else
 	{
-		cout << "CANNOT OPEN FILE" << endl;
+		cout << "CANNOT OPEN FILE!" << endl;
 		exit(-1);
 	}
 }
@@ -1198,10 +1215,46 @@ int previousCompatible(Previous previous1, Previous previous2)
         return 0;
 }
 
-//include k-mer
+void updateKBases(KMer k, KMer & k0)
+{
+//	int np, size;
+
+//	size = k.s.size() < 1 ? k.s.size() : 1;
+//	for(np = 0; np < size/*k.s.size()*/; np ++)
+//	{
+//		if(np >= k0.A.size())
+//		{
+//			k0.A.push_back(0x00);
+//			k0.C.push_back(0x00);
+//			k0.G.push_back(0x00);
+//			k0.T.push_back(0x00);
+//			k0.N.push_back(0x00);
+//		}
+
+//		switch(k.s[np])
+//		{
+//			case 'A': if(k0.A[np] != 0xff) k0.A[np] ++; break;
+//			case 'C': if(k0.C[np] != 0xff) k0.C[np] ++; break;
+//			case 'G': if(k0.G[np] != 0xff) k0.G[np] ++; break;
+//			case 'T': if(k0.T[np] != 0xff) k0.T[np] ++; break;
+//			default: if(k0.N[np] != 0xff) k0.N[np] ++;
+//		}
+//	}
+
+	if(k.s.size() > 0)
+	        switch(k.s[0])
+	        {
+	                case 'A': k0.A ++; break;
+	                case 'C': k0.C ++; break;
+	                case 'G': k0.G ++; break;
+	                case 'T': k0.T ++; break;
+	                default: k0.N ++;
+	        }
+}
+
 void updateKMer(vector<vector<Base> > & genome, unsigned int chromosomeID, unsigned int chromosomeOffset, unsigned int nextID, unsigned int nextOffset, unsigned int chromosomeID0, unsigned int chromosomeOffset0, unsigned int nextID0, unsigned int nextOffset0, vector<char> s, vector<char> nextS, int insertVariation, int mrl)
 {
-	int ip, ipp, ip0, np, pp, cip, nip;
+	int ip, ipp, ip0, np, pp, cip, nip, size;
 	KMer k1, k2;
 	ContiMer p;
 	vector<unsigned int> nextItem, chromosomeItem;
@@ -1212,6 +1265,16 @@ void updateKMer(vector<vector<Base> > & genome, unsigned int chromosomeID, unsig
 	k1.s = s;
 	k1.chromosomeID0 = chromosomeID0;
 	k1.chromosomeOffset0 = chromosomeOffset0;
+//	size = s.size() < 1 ? s.size() : 1;
+//	for(np = 0; np < size/*s.size()*/; np ++)
+//	{
+//		k1.A.push_back(0x00);
+//		k1.C.push_back(0x00);
+//		k1.G.push_back(0x00);
+//		k1.T.push_back(0x00);
+//		k1.N.push_back(0x00);
+//	}
+	k1.A = k1.C = k1.G = k1.T = k1.N = 0;
 //	k1.nextID = -1;//nextID;
 //	k1.nextOffset = -1;//nextOffset;
 //	k1.nextItem = -1;//k1.nextID == -1 ? -1 : genome[k1.nextID][k1.nextOffset].kMer.size();
@@ -1231,11 +1294,13 @@ void updateKMer(vector<vector<Base> > & genome, unsigned int chromosomeID, unsig
 		{
 //			cout << "insert to " << chromosomeID << ", " << chromosomeOffset << ", " << ipp << endl;
 			genome[chromosomeID][chromosomeOffset].kMer.push_back(k1);
+			updateKBases(k1, genome[chromosomeID][chromosomeOffset].kMer[ipp]);
 		}
 		else
 		{
 			genome[chromosomeID][chromosomeOffset].kMer[ipp].coverage ++;
 //			cout << "update " << chromosomeID << ", " << chromosomeOffset << ", " << ipp << endl;
+			updateKBases(k1, genome[chromosomeID][chromosomeOffset].kMer[ipp]);
 		}
 //		chromosomeItem = ipp;
 		chromosomeItem.push_back(ipp);
@@ -1257,11 +1322,13 @@ void updateKMer(vector<vector<Base> > & genome, unsigned int chromosomeID, unsig
 			{
 //				cout << "insert to " << chromosomeID << ", " << chromosomeOffset << ", " << ipp << endl;
 				genome[chromosomeID][chromosomeOffset].kMer.push_back(k1);
+				updateKBases(k1, genome[chromosomeID][chromosomeOffset].kMer[ipp]);
 			}
 			else
 			{
 				genome[chromosomeID][chromosomeOffset].kMer[ipp].coverage ++;
 //				cout << "update " << chromosomeID << ", " << chromosomeOffset << ", " << ipp << endl;
+				updateKBases(k1, genome[chromosomeID][chromosomeOffset].kMer[ipp]);
 			}
 			chromosomeItem.push_back(ipp);
 		}
@@ -1284,11 +1351,13 @@ void updateKMer(vector<vector<Base> > & genome, unsigned int chromosomeID, unsig
 			{
 //				cout << "insert to " << chromosomeID << ", " << chromosomeOffset << ", " << ipp << endl;
 				genome[chromosomeID][chromosomeOffset].kMer.push_back(k1);
+				updateKBases(k1, genome[chromosomeID][chromosomeOffset].kMer[ipp]);
 			}
 			else
 			{
 				genome[chromosomeID][chromosomeOffset].kMer[ipp].coverage ++;
 //				cout << "update " << chromosomeID << ", " << chromosomeOffset << ", " << ipp << endl;
+				updateKBases(k1, genome[chromosomeID][chromosomeOffset].kMer[ipp]);
 			}
 			chromosomeItem.push_back(ipp);
 		}
@@ -1312,11 +1381,13 @@ void updateKMer(vector<vector<Base> > & genome, unsigned int chromosomeID, unsig
 				{
 //					cout << "insert to " << chromosomeID << ", " << chromosomeOffset << ", " << ipp << endl;
 					genome[chromosomeID][chromosomeOffset].kMer.push_back(k1);
+					updateKBases(k1, genome[chromosomeID][chromosomeOffset].kMer[ipp]);
 				}
 				else
 				{
 					genome[chromosomeID][chromosomeOffset].kMer[ipp].coverage ++;
 //					cout << "update " << chromosomeID << ", " << chromosomeOffset << ", " << ipp << endl;
+					updateKBases(k1, genome[chromosomeID][chromosomeOffset].kMer[ipp]);
 				}
 				chromosomeItem.push_back(ipp);
 			}
@@ -1334,6 +1405,16 @@ cont:
 //      k2.previousItem = -1;//genome[k2.previousID][k2.previousOffset].kMer.size() - 1;
 //      k2.nextID = k2.nextOffset = k2.nextItem = -1;
 	k2.coverage = 0;
+//	size = nextS.size() < 1 ? nextS.size() : 1;
+//        for(np = 0; np < size/*nextS.size()*/; np ++)
+//        {
+//                k2.A.push_back(0x00);
+//                k2.C.push_back(0x00);
+//                k2.G.push_back(0x00);
+//                k2.T.push_back(0x00);
+//                k2.N.push_back(0x00);
+//        }
+	k2.A = k2.C = k2.G = k2.T = k2.N = 0;
 
         if(genome[nextID][nextOffset].contiMer.size() == 0 && (nextID0 == -1 || genome[nextID0][nextOffset0].contiMer.size() == 0))
         {
@@ -1508,7 +1589,6 @@ cont:
 					pp ++;
                                         goto cont;
 				}
-//                      cout << "--------" << sp << ", " << pp << "--------" << endl;
 			tag0 = tag1 = tag2 = 0;
                         if(seqs[sp].frSets[pp] == 1 && seqs[sp0].frSets[pp] == 0)
                         {
@@ -1542,10 +1622,6 @@ cont:
                                         chromosomeOffset = seqs[sp].positionSets[pp][ppp].chromosomeOffset;
 					chromosomeID0 = seqs[sp0].positionSets[pp][ppp].chromosomeID;
 					chromosomeOffset0 = seqs[sp0].positionSets[pp][ppp].chromosomeOffset;
-//					if(chromosomeOffset > chromosomeOffset0)
-//					{
-//						cout << "Check needed: " << chromosomeOffset << "vs" << chromosomeOffset0 << endl;
-//					}
 
                                         nextID = seqs[sp].positionSets[pp][ppp + 1].chromosomeID;
                                         nextOffset = seqs[sp].positionSets[pp][ppp + 1].chromosomeOffset;
@@ -1586,7 +1662,7 @@ cont:
                                                                                 //genome[chromosomeID][cpp].nextOffset = cpp + 1;
                                                                         }
 
-//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 									else
 									{
 			                                                        if(s.size() > 0) s.clear();
@@ -1609,7 +1685,7 @@ cont:
 			                                                        updateKMer(genome, chromosomeID, cpp, chromosomeID, cpp + 1, -1, -1, nextID0, nextOffset0, s, nextS, insertVariation, mrl);
 
 									}
-//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                                 }
                                                                 else// large insertion
 //large insertion is ignored for simplicity
@@ -1747,7 +1823,7 @@ void loadReadAlignment(vector<vector<Base> > & genome, int length, int insertVar
 	ifstream r, ra;
 	int seqStartID, aliStartID, finish, rp;
 	string s;
-	int counter = 0;
+//	int counter = 0;
 
 	r.open("tmp/_reads.fa");
 	s = "tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie";
@@ -1758,9 +1834,9 @@ cont:
         finish = loadSeq(r, reads, aliStartID, seqStartID);
         loadReadAli(ra, reads, aliStartID, seqStartID);
         updateGenomeWithRead(reads, genome, length, insertVariation, mrl);
-	if(finish == 0)// && counter < 10)
+	if(finish == 0)// && counter < 2)
 	{
-//		counter ++;
+//		cout << counter ++ << endl;
 		reads.clear();
 		goto cont;
 	}
@@ -1803,7 +1879,6 @@ void filterLowCoverage(vector<vector<Base> > & genome, int coverage)
           cout << "*************************" << endl;
           for(gp = 0; gp < genome.size(); gp ++)
           {
-//                  for(cpp = 207630095; cpp < 207630095 + 120; cpp ++)
                   for(cpp = 0; cpp < genome[gp].size(); cpp ++)
                   {
                           cout << "[";
@@ -1832,7 +1907,6 @@ void filterLowCoverage(vector<vector<Base> > & genome, int coverage)
 
           for(gp = 0; gp < genome.size(); gp ++)
           {
-//                  for(cpp = 207630095; cpp < 207630095 + 120; cpp ++)
                   for(cpp = 0; cpp < genome[gp].size(); cpp ++)
                   {
                           cout << "[";
@@ -1867,7 +1941,6 @@ void filterLowCoverage(vector<vector<Base> > & genome, int coverage)
 
           for(gp = 0; gp < genome.size(); gp ++)
           {
-//                  for(cpp = 207630095; cpp < 207630095 + 120; cpp ++)
                   for(cpp = 0; cpp < genome[gp].size(); cpp ++)
                   {
                           cout << "[";
@@ -1909,6 +1982,26 @@ void checkContiMers(vector<vector<Base> > & genome)
 
 }
 
+char max(int a, int c, int g, int t, int n)
+{
+	if(a == 0 && c == 0 && g == 0 && t == 0 && n == 0) return 'X';
+	if(a >= c && a >= g && a >= t && a >= n) return 'A';
+	if(c >= a && c >= g && c >= t && c >= n) return 'C';
+	if(g >= a && g >= c && g >= t && g >= n) return 'G';
+	if(t >= a && t >= c && t >= g && t >= n) return 'T';
+	if(n >= a && n >= c && n >= g && n >= t) return 'N';
+}
+
+//string getKMer(vector<char> A, vector<char> C, vector<char> G, vector<char> T, vector<char> N)
+//{
+//	int np;
+//	string s;
+//
+//	for(np = 0; np < A.size(); np ++)
+//		s.push_back(max(A[np], C[np], G[np], T[np], N[np]));
+//	return s;
+//}
+
 void extdContigs1(vector<vector<Base> > & genome, int coverage, int k, int chromosomeID)
 {
 	unsigned int gp, cp, ip, gpp, cpp, ipp, gppBak, cppBak, ippBak, seqID, i, kMerTag, numItem, nextItem, sp, gpBak, cpBak, ipBak, np, gpp0, cpp0, ngp, ncp, nip, ippp, item, next, count, nCount, startIDBak = -1, startOffsetBak = -1, endIDBak = -1, endOffsetBak = -1;
@@ -1916,6 +2009,7 @@ void extdContigs1(vector<vector<Base> > & genome, int coverage, int k, int chrom
 //	vector<Contig> contigs;
 	vector<char> sBak;
 	vector<Contig> contigsBuf;
+	char nucleotide;
 
 //******************************************************************************************************************************************************************************
 	ofstream out;
@@ -1950,7 +2044,17 @@ void extdContigs1(vector<vector<Base> > & genome, int coverage, int k, int chrom
 
 						while(kMerTag == 1 && genome[gpp][cpp].kMer[ipp].traversed == 0 || kMerTag == 0)
 						{
-							contigs[contigs.size() - 1].nucleotides.push_back(genome[gpp][cpp].nucleotide);
+							if(kMerTag == 0)
+								contigs[contigs.size() - 1].nucleotides.push_back(genome[gpp][cpp].contiMer[ipp].nucleotide);
+							else
+							{
+//								nucleotide = max(genome[gpp][cpp].kMer[ipp].A[0], genome[gpp][cpp].kMer[ipp].C[0], genome[gpp][cpp].kMer[ipp].G[0], genome[gpp][cpp].kMer[ipp].T[0], genome[gpp][cpp].kMer[ipp].N[0]);
+								nucleotide = max(genome[gpp][cpp].kMer[ipp].A, genome[gpp][cpp].kMer[ipp].C, genome[gpp][cpp].kMer[ipp].G, genome[gpp][cpp].kMer[ipp].T, genome[gpp][cpp].kMer[ipp].N);
+								if(nucleotide != 'X')
+									contigs[contigs.size() - 1].nucleotides.push_back(nucleotide);
+								else
+									contigs[contigs.size() - 1].nucleotides.push_back(genome[gpp][cpp].nucleotide);
+							}
 
 							if(kMerTag == 1 && genome[gpp][cpp].kMer[ipp].contigOffset != -1 || kMerTag == 0) 
 							//make the change: incorporate novel ones
@@ -1976,7 +2080,7 @@ void extdContigs1(vector<vector<Base> > & genome, int coverage, int k, int chrom
 								gpBak = gpp;
 								cpBak = cpp;
 								ipBak = ipp;
-								sBak = genome[gpp][cpp].kMer[ipp].s;
+								sBak = genome[gpp][cpp].kMer[ipp].s;//getKMer(genome[gpp][cpp].kMer[ipp].A, genome[gpp][cpp].kMer[ipp].C, genome[gpp][cpp].kMer[ipp].G, genome[gpp][cpp].kMer[ipp].T, genome[gpp][cpp].kMer[ipp].N);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 								nCount = 0;
@@ -2105,6 +2209,7 @@ void extdContigs1(vector<vector<Base> > & genome, int coverage, int k, int chrom
 							}
 						}
 
+//xpp and xppBak are always the same
 						if(kMerTag == 1)// && genome[gpp][cpp].kMer[ipp].traversed == 1
 						{
 							contigs[contigs.size() - 1].endID = gppBak;
@@ -2294,7 +2399,7 @@ void loadContigs(int chromosomeID)
 	}
 	else
 	{
-		cout << "CANNOT OPEN FILE" << endl;
+		cout << "CANNOT OPEN FILE!" << endl;
 		exit(-1);
 	}
 }
@@ -2371,16 +2476,16 @@ cont:
 			{
 //				cout << "real extension: " << contigs[cp].startOffset << " to " <<  contigs[cppBak].startOffset << endl;
 				contigs[cppBak].extended = 2; 
-				contigs[cp].endID = contigsBuf[0].endID; 
-				contigs[cp].endOffset = contigsBuf[0].endOffset;
-				contigs[cp].endID0 = contigsBuf[0].endID0;
-				contigs[cp].endOffset0 = contigsBuf[0].endOffset0;
 				for(np = //contigs[cp].endOffset < contigs[cpp].startOffset ? 0 : //
-					contigs[cp].endOffset - contigs[cpp].startOffset + 1; np < contigsBuf[0].nucleotides.size(); np ++)
+					contigs[cp].endOffset - contigsBuf[0].startOffset + 1; np < contigsBuf[0].nucleotides.size(); np ++)
 					contigs[cp].nucleotides.push_back(contigsBuf[0].nucleotides[np]);
 				/*for(np = //contigs[cp].endOffset < contigs[cpp].startOffset ? 0 : //
 					contigs[cp].endOffset - contigs[cpp].startOffset + 1; np < contigsBuf[0].pairedNucleotides.size(); np ++)
 					contigs[cp].pairedNucleotides.push_back(contigsBuf[0].pairedNucleotides[np]);*/
+				contigs[cp].endID = contigsBuf[0].endID;
+                                contigs[cp].endOffset = contigsBuf[0].endOffset;
+                                contigs[cp].endID0 = contigsBuf[0].endID0;
+                                contigs[cp].endOffset0 = contigsBuf[0].endOffset0;
 				goto cont;
 			}
 		}
@@ -2441,7 +2546,6 @@ void extendContigs(vector<vector<Base> > & genome, int coverage, int k, int chro
 
 int overlap(unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2) 
 {
-//	if(x1 <= x2 && y1 >= x2 || x1 <= y2 && y1 >= y2 || x1 >= x2 && y1 <= y2)
 	if(x1 <= x2 && x2 <= y1 && y1 <= y2 && (int)y1 - (int)x2 > 0 || x2 <= x1 && x1 <= y2 && y2 <= y1 && (int)y2 - (int)x1 > 0 || x1 <= x2 && x2 <= y2 && y2 <= y1 && (int)y2 - (int)x2 > 0 || x2 <= x1 && x1 <= y1 && y1 <= y2 && (int)y1 - (int)x1 > 0)
 		return 1;
 	else
@@ -2450,7 +2554,7 @@ int overlap(unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2)
 
 void scaffoldContigs(vector<vector<Base> > & genome, int chromosomeID)
 {
-	unsigned int seqID, cp, cp0, cpp, startIDBak, i, sp, spp;
+	unsigned int seqID, cp, cp0, cpp, i, sp, spp;
 	vector<vector<char> > scaffolds;
 	vector<char> scaffold;
 	int cont, covered;
@@ -2485,7 +2589,6 @@ void scaffoldContigs(vector<vector<Base> > & genome, int chromosomeID)
 							if(genome[0][contigs[cp].endOffset + i + 1].kMer.size() > 0 || genome[0][contigs[cp].endOffset + i + 1].contiMer.size() > 0)
 								covered ++;
 						if(contigs[cp0].startOffset - contigs[cp].endOffset - 1 != 0 && (double) covered / (contigs[cp0].startOffset - contigs[cp].endOffset - 1) >= 0.5 || contigs[cp0].startOffset - contigs[cp].endOffset - 1 == 0)//0.8
-//						if(covered != 0)
 							for(i = 0; i < contigs[cp0].startOffset - contigs[cp].endOffset - 1; i ++)
 								scaffolds[scaffolds.size() - 1].push_back(genome[0][contigs[cp].endOffset + i + 1].nucleotide);
 //								scaffolds[scaffolds.size() - 1].push_back('N');
@@ -2546,7 +2649,7 @@ int readLog()
         }
         else
         {
-                cout << "CANNOT OPEN FILE" << endl;
+                cout << "CANNOT OPEN FILE!" << endl;
                 exit(-1);
         }
 
@@ -2600,7 +2703,7 @@ void ref1()
 		}
 		else
 		{
-			cout << "CANNOT OPEN FILE" << endl;
+			cout << "CANNOT OPEN FILE!" << endl;
 			exit(-1);
 		}
 
@@ -2672,7 +2775,7 @@ void ref1()
 	}
 	else
 	{
-		cout << "CANNOT OPEN FILE" << endl;
+		cout << "CANNOT OPEN FILE!" << endl;
 		return;
 	}
 */
@@ -2703,7 +2806,7 @@ void ref1()
 		}
 		else
 		{
-			cout << "CANNOT OPEN FILE" << endl;
+			cout << "CANNOT OPEN FILE!" << endl;
 			return;
 		}
 
@@ -2732,7 +2835,7 @@ void ref1()
 	        }
 	        else
 	        {
-	                cout << "CANNOT OPEN FILE" << endl;
+	                cout << "CANNOT OPEN FILE!" << endl;
 	                return;
 	        }
 
@@ -2756,7 +2859,7 @@ void ref1()
 		}
 		else
 		{
-			cout << "CANNOT OPEN FILE" << endl;
+			cout << "CANNOT OPEN FILE!" << endl;
 			return;
 		}
 
@@ -2779,7 +2882,7 @@ void ref1()
 		}
 		else
 		{
-			cout << "CANNOT OPEN FILE" << endl;
+			cout << "CANNOT OPEN FILE!" << endl;
 			return;
 		}
 
@@ -2802,7 +2905,7 @@ void ref1()
 	        }
 	        else
 	        {
-	                cout << "CANNOT OPEN FILE" << endl;
+	                cout << "CANNOT OPEN FILE!" << endl;
 	                return;
 	        }
 
@@ -2852,7 +2955,7 @@ void ref2(ofstream & e, ofstream & r)
         }
         else
         {
-                cout << "CANNOT OPEN FILE" << endl;
+                cout << "CANNOT OPEN FILE!" << endl;
                 return;
         }
 
@@ -2883,7 +2986,7 @@ void ref2(ofstream & e, ofstream & r)
                 }
                 else
                 {
-                        cout << "CANNOT OPEN FILE" << endl;
+                        cout << "CANNOT OPEN FILE!" << endl;
                         return;
                 }
 
@@ -2907,7 +3010,7 @@ void ref2(ofstream & e, ofstream & r)
                 }
                 else
                 {
-                        cout << "CANNOT OPEN FILE" << endl;
+                        cout << "CANNOT OPEN FILE!" << endl;
                         return;
                 }
 
@@ -2927,7 +3030,7 @@ void ref2(ofstream & e, ofstream & r)
                 }
                 else
                 {
-                        cout << "CANNOT OPEN FILE" << endl;
+                        cout << "CANNOT OPEN FILE!" << endl;
                         return;
                 }
                 ex.close();
@@ -2950,7 +3053,7 @@ void ref2(ofstream & e, ofstream & r)
         }
         else
         {
-                cout << "CANNOT OPEN FILE" << endl;
+                cout << "CANNOT OPEN FILE!" << endl;
                 return;
         }
 }
@@ -3019,7 +3122,7 @@ void refinement(ofstream & e, ofstream & r, int fastMap)
                 }
                 else
                 {
-                        cout << "CANNOT OPEN FILE" << endl;
+                        cout << "CANNOT OPEN FILE!" << endl;
                         exit(-1);
                 }
 
@@ -3088,7 +3191,7 @@ void refinement(ofstream & e, ofstream & r, int fastMap)
         }
         else
         {
-                cout << "CANNOT OPEN FILE" << endl;
+                cout << "CANNOT OPEN FILE!" << endl;
                 return;
         }
 
@@ -3119,7 +3222,7 @@ void refinement(ofstream & e, ofstream & r, int fastMap)
                 }
                 else
                 {
-                        cout << "CANNOT OPEN FILE" << endl;
+                        cout << "CANNOT OPEN FILE!" << endl;
                         return;
                 }
 
@@ -3144,7 +3247,7 @@ void refinement(ofstream & e, ofstream & r, int fastMap)
                 }
                 else
                 {
-                        cout << "CANNOT OPEN FILE" << endl;
+                        cout << "CANNOT OPEN FILE!" << endl;
                         return;
                 }
 
@@ -3176,7 +3279,7 @@ void refinement(ofstream & e, ofstream & r, int fastMap)
                 }
                 else
                 {
-                        cout << "CANNOT OPEN FILE" << endl;
+                        cout << "CANNOT OPEN FILE!" << endl;
                         return;
                 }
                 ex.close();
@@ -3199,7 +3302,7 @@ void refinement(ofstream & e, ofstream & r, int fastMap)
         }
         else
         {
-                cout << "CANNOT OPEN FILE" << endl;
+                cout << "CANNOT OPEN FILE!" << endl;
                 return;
         }
 
@@ -3209,8 +3312,6 @@ void refinement(ofstream & e, ofstream & r, int fastMap)
                 for(i = 0; i < initTags.size(); i ++)
                         if(initTags[i] == 1)
                         {
-if(initContigs[i].size() == 2930102)
-cout << i << endl;
                                 ini << ">" << i << endl;
                                 for(j = 0; j < initContigs[i].size(); j ++)
                                 {
@@ -3222,7 +3323,7 @@ cout << i << endl;
         }
         else
         {
-                cout << "CANNOT OPEN FILE" << endl;
+                cout << "CANNOT OPEN FILE!" << endl;
                 return;
         }
 #endif
@@ -3252,7 +3353,7 @@ int maxReadLength(ifstream & r)
 	}
 	else
 	{
-		cout << "CANNOT OPEN FILE" << endl;
+		cout << "CANNOT OPEN FILE!" << endl;
 		exit(-1);
 	}
 
@@ -3417,30 +3518,27 @@ int formalizeGenome(ifstream & in, int p)
 	chromosomeID = 0;
 	for(gp = 0; gp < genome.size(); gp ++)
 	{
-//		if(genome.size() / p <= 500000)
+		s = "tmp/_genome." + itoa(chromosomeID) + ".fa";
+		out.open(s.c_str());
+		out << ">0" << endl;
+		q = 1;
+		for(cp = 0; cp < genome[gp].size(); cp ++)
 		{
-			s = "tmp/_genome." + itoa(chromosomeID) + ".fa";
-			out.open(s.c_str());
-			out << ">0" << endl;
-			q = 1;
-			for(cp = 0; cp < genome[gp].size(); cp ++)
+			out << genome[gp][cp];
+			if((cp + 1) % 60 == 0 || cp == genome[gp].size() - 1 || ((cp + 1) % (genome[gp].size() / p) == 0 && q < p))
+				out << endl;
+			if(cp != genome[gp].size() - 1 && ((cp + 1) % (genome[gp].size() / p) == 0 && q < p))
 			{
-				out << genome[gp][cp];
-				if((cp + 1) % 60 == 0 || cp == genome[gp].size() - 1 || ((cp + 1) % (genome[gp].size() / p) == 0 && q < p))
-					out << endl;
-				if(cp != genome[gp].size() - 1 && ((cp + 1) % (genome[gp].size() / p) == 0 && q < p))
-				{
-					out.close();
-					chromosomeID ++;
-					q ++;
-					s = "tmp/_genome." + itoa(chromosomeID) + ".fa";
-					out.open(s.c_str());
-					out << ">0" << endl;
-				}
+				out.close();
+				chromosomeID ++;
+				q ++;
+				s = "tmp/_genome." + itoa(chromosomeID) + ".fa";
+				out.open(s.c_str());
+				out << ">0" << endl;
 			}
-			out.close();
-			chromosomeID ++;
 		}
+		out.close();
+		chromosomeID ++;
 	}
 	genome.clear();
 	out.close();
@@ -3535,7 +3633,7 @@ void * task0(void * arg)
 	{
 		command = "bowtie2-build -f tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_genome." + itoa(chromosomeID) + " > bowtie_doc.txt";
 		system(command.c_str());
-		command = "bowtie2 -f --no-mixed -k 5 -p 8 --local --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min G,5,2 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome." + itoa(chromosomeID) + " -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie 2>> bowtie_doc.txt";
+		command = "bowtie2 -f --no-mixed -k 5 -p 8 --local --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min G,5,2 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome." + itoa(chromosomeID) + " -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder --very-sensitive-local > tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie 2>> bowtie_doc.txt";// --very-sensitive-local
 //                command = "bowtie2 -f --no-mixed -k 5 -p 8 --end-to-end --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min L,-0.24,-0.24 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome." + itoa(chromosomeID) + " -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie 2>> bowtie_doc.txt";
 		system(command.c_str());
 	}
@@ -3554,10 +3652,20 @@ void * task1(void * arg)
 	ins.numChromosomes;
 	ins.fastMap;
 
+	for(chromosomeID = 0; chromosomeID < ins.numChromosomes; chromosomeID ++)
+	{
+//		command = "lastdb -c -uMAM8 tmp/_genome." + itoa(chromosomeID) + ".db tmp/_genome." + itoa(chromosomeID) + ".fa > last_doc.txt";
+//		system(command.c_str());
+//		command = "lastal -e34 -m100 tmp/_genome." + itoa(chromosomeID) + ".db tmp/_contigs.fa | last-split > tmp/_contigs_genome." + itoa(chromosomeID) + ".maf 2>> last_doc.txt";
+//		system(command.c_str());
+//		command = "maf-convert.py psl tmp/_contigs_genome." + itoa(chromosomeID) + ".maf > tmp/_contigs_genome." + itoa(chromosomeID) + ".psl 2>> last_doc.txt";
+//		system(command.c_str());
+	}
+
 	if(ins.fastMap == 1) s = " -fastMap "; else s = " ";
 	for(chromosomeID = 0; chromosomeID < ins.numChromosomes; chromosomeID ++)
 	{
-		command = "blat tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_contigs.fa -noHead tmp/_contigs_genome." + itoa(chromosomeID) + ".psl" + s + "> blat_doc.txt";
+		command = "blat tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_contigs.fa -noHead tmp/_contigs_genome." + itoa(chromosomeID) + ".psl" + s + "> blat_doc.txt";// -minIdentity=50 -q=dnax -t=dnax
 		system(command.c_str());
 	}
 }
@@ -3575,10 +3683,10 @@ void nonParallelMap(int distanceLow, int distanceHigh, int numChromosomes, int f
 	{
 		command = "bowtie2-build -f tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_genome." + itoa(chromosomeID) + " > bowtie_doc.txt";
 		system(command.c_str());
-		command = "bowtie2 -f --no-mixed -k 5 -p 8 --local --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min G,5,2 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome." + itoa(chromosomeID) + " -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie 2>> bowtie_doc.txt";
+		command = "bowtie2 -f --no-mixed -k 5 -p 8 --local --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min G,5,2 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome." + itoa(chromosomeID) + " -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder --very-sensitive-local > tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie 2>> bowtie_doc.txt";// --very-sensitive-local
 //		command = "bowtie2 -f --no-mixed -k 5 -p 8 --end-to-end --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min L,-0.24,-0.24 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome." + itoa(chromosomeID) + " -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie 2>> bowtie_doc.txt";
 		system(command.c_str());
-		command = "blat tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_contigs.fa -noHead tmp/_contigs_genome." + itoa(chromosomeID) + ".psl" + s + "> blat_doc.txt";
+		command = "blat tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_contigs.fa -noHead tmp/_contigs_genome." + itoa(chromosomeID) + ".psl" + s + "> blat_doc.txt";// -minIdentity=50 -q=dnax -t=dnax
 		system(command.c_str());
 	}
 }
@@ -3608,7 +3716,7 @@ void writeLog(int n)
 		out << n << endl;
 	else
 	{
-		cout << "CANNOT OPEN FILE" << endl;
+		cout << "CANNOT OPEN FILE!" << endl;
 		exit(-1);
 	}
 }
@@ -3619,31 +3727,35 @@ void print()
 	cout << "Inputs:" << endl;
 	cout << "--read1 is the the first pair of PE DNA reads in fasta format" << endl;
 	cout << "--read2 is the the second pair of PE DNA reads in fasta format" << endl;
-	cout << "--contig is the initial contigs/scaffolds in fasta format" << endl;
+	cout << "--contig is the initial contigs in fasta format" << endl;
 	cout << "--genome is the reference genome in fasta format" << endl;
 	cout << "--distanceLow is the lower bound of alignment distance between the first and second pairs of PE DNA reads" << endl;
 	cout << "--distanceHigh is the upper bound of alignment distance between the first and second pairs of PE DNA reads" << endl;
 	cout << "Outputs:" << endl;
-	cout << "--extendedContig is the extended contig/scaffold file in fasta format" << endl;
-	cout << "--remainingContig is the not extended initial contig/scaffold file in fasta format" << endl;
+	cout << "--extendedContig is the extended contig file in fasta format" << endl;
+	cout << "--remainingContig is the not extended initial contig file in fasta format" << endl;
 	cout << "Options:" << endl;
 	cout << "--kMer is the k-mer size (default: 5)" << endl;
 	cout << "--insertVariation is the small variation of insert length (default: 50)" << endl;
 	cout << "--coverage is the minimum coverage to keep a path in de Bruijn graph (default: 20)" << endl;
 	cout << "--noAlignment skips the initial time-consuming alignment step, if all the alignment files have been provided in tmp directory (default: none)" << endl;
 	cout << "--part is the number of parts a chromosome is divided into when it is loaded to reduce memory requirement (default: 1)" << endl;
-	cout << "--fastMap makes BLAT alignment faster but may lower AlignGraph's performance. Useful for large genomes (default: none)" << endl;
+	cout << "--fastMap makes BLAT alignment faster but may lower LEAF's performance. Useful for large genomes (default: none)" << endl;
 }
 
 int main(int argc, char * argv[])
 {
 	ifstream r1, r2, c, g;
 	ofstream e, r;
-//	vector<vector<Base> > genome;
 	string s, sCheck;
 	stringstream ssCheck;
 	int i, tagRead1 = 0, tagRead2 = 0, tagContig = 0, tagGenome = 0, tagExtendedContig = 0, tagKMer = 0, tagDistanceLow = 0, tagDistanceHigh = 0, tagNoAlignment = 1, k = 5, distanceLow = 0, distanceHigh = MAX, chromosomeID, numChromosomes, coverage = 20, tagCoverage = 0, mrl, mrl1, mrl2, tagInsertVariation = 0, insertVariation = 50, tagRemainingContig = 0, part = 1, tagPart = 0, tagFastMap = 0;
 	time_t start, end, startAlign, endAlign;
+
+//	e.open("extended_contigs.fa");
+//	r.open("remaining_contigs.fa");
+//	refinement(e, r, 0);
+//	return 1;
 
 	cout << "AlignGraph: algorithm for secondary de novo genome assembly guided by closely related references" << endl;
 	cout << "By Ergude Bao, CS Department, UC-Riverside. All Rights Reserved" << endl << endl;
@@ -3881,9 +3993,6 @@ int main(int argc, char * argv[])
 		}
 	}
 
-//	mrl1 = maxReadLength(r1);
-//	mrl2 = maxReadLength(r2);
-//	mrl = mrl1 > mrl2 ? mrl1 : mrl2;
 	if(tagRead1 == 0 || tagRead2 == 0 || tagContig == 0 || tagGenome == 0 || tagExtendedContig == 0 || tagRemainingContig == 0 || k <= 0 || tagDistanceLow == 0 || tagDistanceHigh == 0 || distanceLow > distanceHigh || distanceLow < 0 || insertVariation < 0 || part < 1 || part > 10)// || k > mrl)
 	{
 		print();
@@ -3921,18 +4030,12 @@ int main(int argc, char * argv[])
 	for(chromosomeID = 0; chromosomeID < numChromosomes; chromosomeID ++)
 	{
 		cout << "CHROMOSOME " << chromosomeID << ": " << endl;
-//		g.open(argv[1]);
 		loadGenome(genome, chromosomeID);
 		cout << "(1) chromosome loaded" << endl;
-//		c.open(argv[2]);
-//		ca.open(argv[3]);
 		loadContigAlignment(genome, chromosomeID);
 		cout << "(2) contig alignment loaded" << endl;
-//		r.open(argv[4]);
-//		ra.open(argv[5]);
 		loadReadAlignment(genome, k, insertVariation, chromosomeID, mrl);
 		cout << "(3) read alignment loaded" << endl;
-//		e.open(argv[6]);
 		extendContigs(genome, coverage, k, chromosomeID);
 		cout << "(4) contigs extended" << endl;
 		scaffoldContigs(genome, chromosomeID);
@@ -3942,7 +4045,7 @@ int main(int argc, char * argv[])
 		genome.clear();
 		sourceIDBak = -1;
 	}
-//	return 1;
+
 	refinement(e, r, tagFastMap);
 
 	end = time(NULL);
