@@ -2645,7 +2645,7 @@ int readLog()
         if(in.is_open())
         {
                 getline(in, buf);
-                return atoi(buf.c_str());
+                return(atoi(buf.c_str()));
         }
         else
         {
@@ -2657,7 +2657,7 @@ int readLog()
 
 void ref1()
 {
-	int numChromosome, i, j, k, seqID;
+	int numChromosomes, i, j, k, seqID;
 	string s;
 	vector<vector<char> > initContigs, extdContigs;
 	vector<char> contig;
@@ -2669,14 +2669,14 @@ void ref1()
 	ofstream e, ini;
 	vector<int> initNums;
 
-	numChromosome = readLog();
+	numChromosomes = readLog();
 
 ///////////////////////////////////////////////////////////////////for easy alignment/////////////////////////////////////////////////////////////////////////////////////
 
 	ifstream tmpIn;
 	ofstream tmpOut;
 	vector<vector<char> > tmpContigs;
-	for(i = 0; i < numChromosome; i ++)
+	for(i = 0; i < numChromosomes; i ++)
 	{
 		tmpIn.clear();
 		tmpOut.clear();
@@ -2749,7 +2749,7 @@ void ref1()
 	}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        for(i = 0; i < numChromosome; i ++)
+        for(i = 0; i < numChromosomes; i ++)
 	{
 		s = "blat tmp/_extended_contigs." + itoa(i) + ".fa tmp/_short_initial_contigs." + itoa(i) + ".fa -noHead tmp/_short_initial_contigs_extended_contigs." + itoa(i) + ".psl  > blat_doc.txt";
 		system(s.c_str());
@@ -2780,7 +2780,7 @@ void ref1()
 	}
 */
 	seqID = 0;
-	for(i = 0; i < numChromosome; i ++)
+	for(i = 0; i < numChromosomes; i ++)
 	{
 		s = "tmp/_extended_contigs." + itoa(i) + ".fa";
 		ex.clear();
@@ -2918,7 +2918,7 @@ void ref1()
 
 void ref2(ofstream & e, ofstream & r)
 {
-        int numChromosome, i, j, k, seqID;
+        int numChromosomes, i, j, k, seqID;
         string s;
         vector<vector<char> > initContigs, extdContigs;
         vector<char> contig;
@@ -2928,8 +2928,8 @@ void ref2(ofstream & e, ofstream & r)
         ifstream in, ex, ps;
         vector<Segment> seg;
 
-        numChromosome = readLog();
-        for(i = 0; i < numChromosome; i ++)
+        numChromosomes = readLog();
+        for(i = 0; i < numChromosomes; i ++)
         {
                 s = "blat tmp/_post_extended_contigs." + itoa(i) + ".fa tmp/_post_initial_contigs." + itoa(i) + ".fa -noHead tmp/_initial_contigs_extended_contigs." + itoa(i) + ".psl > blat_doc.txt";
                 system(s.c_str());
@@ -2960,7 +2960,7 @@ void ref2(ofstream & e, ofstream & r)
         }
 
         seqID = 0;
-        for(i = 0; i < numChromosome; i ++)
+        for(i = 0; i < numChromosomes; i ++)
         {
                 s = "tmp/_post_extended_contigs." + itoa(i) + ".fa";
 		ex.clear();
@@ -3066,7 +3066,7 @@ void ref2(ofstream & e, ofstream & r)
 
 void refinement(ofstream & e, ofstream & r, int fastMap)
 {
-        int numChromosome, i, j, k, seqID;
+        int numChromosomes, i, j, k, seqID;
         string s, s0;
         vector<vector<char> > initContigs, extdContigs;
         vector<char> contig;
@@ -3084,14 +3084,14 @@ void refinement(ofstream & e, ofstream & r, int fastMap)
 	ext.open("ex.fa");
 #endif
 
-        numChromosome = readLog();
+        numChromosomes = readLog();
 
 ///////////////////////////////////////////////////////////////////for easy alignment/////////////////////////////////////////////////////////////////////////////////////
 
         ifstream tmpIn;
         ofstream tmpOut;
         vector<vector<char> > tmpContigs;
-        for(i = 0; i < numChromosome; i ++)
+        for(i = 0; i < numChromosomes; i ++)
         {
                 tmpIn.clear();
                 tmpOut.clear();
@@ -3158,7 +3158,7 @@ void refinement(ofstream & e, ofstream & r, int fastMap)
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	if(fastMap == 1) s0 = " -fastMap "; else s0 = " ";
-        for(i = 0; i < numChromosome; i ++)
+        for(i = 0; i < numChromosomes; i ++)
         {
                 s = "blat tmp/_extended_contigs." + itoa(i) + ".fa tmp/_short_initial_contigs." + itoa(i) + ".fa -noHead tmp/_short_initial_contigs_extended_contigs." + itoa(i) + ".psl" + s0 + ">> blat_doc.txt";
                 system(s.c_str());
@@ -3197,7 +3197,7 @@ void refinement(ofstream & e, ofstream & r, int fastMap)
 
 	int line;
 	seqID = 0;
-        for(i = 0; i < numChromosome; i ++)
+        for(i = 0; i < numChromosomes; i ++)
         {
                 s = "tmp/_extended_contigs." + itoa(i) + ".fa";
                 ex.open(s.c_str());
@@ -3545,10 +3545,10 @@ int formalizeGenome(ifstream & in, int p)
 	return chromosomeID;
 }
 
-void formalizeInput(ifstream & in1, ifstream & in2, string file)
+int formalizeInput(ifstream & in1, ifstream & in2, string file)
 {
         string buf1, buf2;
-        int i;
+        int i, count;
         unsigned long seqID = 0;
         ofstream out;
 
@@ -3557,6 +3557,7 @@ void formalizeInput(ifstream & in1, ifstream & in2, string file)
 	in1.seekg(0);
 	in2.seekg(0);
         out.open(file.c_str());
+	count = 0;
 
         if(in1.is_open() && in2.is_open())
         {
@@ -3584,6 +3585,7 @@ void formalizeInput(ifstream & in1, ifstream & in2, string file)
 				for(i = 0; i < buf2.size(); i ++)
 					out << buf2[i];
 				out << endl;
+				count ++;
                         }
                         else if(buf1[0] != '>' && buf2[0] != '>')
                         {
@@ -3606,6 +3608,7 @@ void formalizeInput(ifstream & in1, ifstream & in2, string file)
                 cout << "CANNOT OPEN FILE!" << endl;
                 exit(-1);
         }
+	return count;
 }
 
 typedef struct insertStruct
@@ -3721,9 +3724,79 @@ void writeLog(int n)
 	}
 }
 
+void checkRatio(int numChromosomes)
+{
+	int i, rp, chromosomeID, aligned;
+	unsigned targetID1, targetStart1, targetEnd1, targetGap1, sourceID1, sourceStart1, sourceEnd1, sourceGap1, sourceSize1, fr1, targetID2, targetStart2, targetEnd2, targetGap2, sourceID2, sourceStart2, sourceEnd2, sourceGap2, sourceSize2, fr2;
+        vector<Segment> segs1, segs2;
+	ifstream r, ra;
+	string s, buf;
+	vector<int> reads;
+	double ratio;
+
+	r.open("tmp/_reads_1.fa");
+	if(r.is_open())
+	{
+		while(r.good())
+		{
+			getline(r, buf);
+			if(buf[0] == '>')
+				reads.push_back(0);
+		}
+	}
+	else
+	{
+		cout << "CANNOT OPEN FILE!" << endl;
+		exit(-1);
+	}
+
+	for(chromosomeID = 0; chromosomeID < numChromosomes; chromosomeID ++)
+	{
+		s = "tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie";
+		ra.open(s.c_str());
+		if(ra.is_open())
+		{
+			while(ra.good())
+			{
+				getline(ra, buf);
+				if(buf[0] == 0) break;
+				if(buf[0] == '@') continue;
+				parseBOWTIE(buf, targetID1, targetStart1, targetEnd1, targetGap1, sourceID1, sourceStart1, sourceEnd1, sourceGap1, sourceSize1, segs1, fr1);
+
+				getline(ra, buf);
+				if(buf[0] == 0)
+				{
+					cout << "BROKEN BOWTIE FILE" << endl;
+					exit(-1);
+				}
+				parseBOWTIE(buf, targetID2, targetStart2, targetEnd2, targetGap2, sourceID2, sourceStart2, sourceEnd2, sourceGap2, sourceSize2, segs2, fr2);
+				if(targetID1 != -1 && targetID2 != -1 && (double) (sourceEnd1 - sourceStart1 - sourceGap1) / /*(sourceEnd1 - sourceStart1)*/ sourceSize1 >= THRESHOLD && (double) (targetEnd1 - targetStart1 - targetGap1) / (targetEnd1 - targetStart1) >= THRESHOLD && (double) (sourceEnd2 - sourceStart2 - sourceGap2) / /*(sourceEnd2 - sourceStart2)*/ sourceSize2 >= THRESHOLD && (double) (targetEnd2 - targetStart2 - targetGap2) / (targetEnd2 - targetStart2) >= THRESHOLD)
+					reads[sourceID1] = 1;
+			}
+		}
+		else
+		{
+			cout << "CANNOT OPEN FILE!" << endl;
+			exit(-1);
+		}
+	}
+
+	for(rp = 0, aligned = 0; rp < reads.size(); rp ++)
+		if(reads[rp] == 1)
+			aligned ++;
+	ratio = aligned == 0 ? 0 : (double) aligned / reads.size();
+	cout << " - " << ratio * 100 << "% reads aligned ";
+	if(ratio < 0.5 && ratio >= 0.25)
+		cout << "(warning: ratio a little low; may not guarantee good results)" << endl;
+	else if(ratio < 0.25)
+		cout << "(warning: ratio too low; hard to guarantee good results)" << endl;
+	else
+		cout << endl;
+}
+
 void print()
 {
-	cout << "AlignGraph --read1 reads_1.fa --read2 reads_2.fa --contig contigs.fa --genome genome.fa --distanceLow distanceLow --distanceHigh distancehigh --extendedContig extendedContigs.fa --remainingContig remainingContigs.fa [--kMer k --insertVariation insertVariation --covereage coverage --noAlignment --part p]" << endl;
+	cout << "AlignGraph --read1 reads_1.fa --read2 reads_2.fa --contig contigs.fa --genome genome.fa --distanceLow distanceLow --distanceHigh distancehigh --extendedContig extendedContigs.fa --remainingContig remainingContigs.fa [--kMer k --insertVariation insertVariation --covereage coverage --noAlignment --part p --checkRatio]" << endl;
 	cout << "Inputs:" << endl;
 	cout << "--read1 is the the first pair of PE DNA reads in fasta format" << endl;
 	cout << "--read2 is the the second pair of PE DNA reads in fasta format" << endl;
@@ -3741,6 +3814,7 @@ void print()
 	cout << "--noAlignment skips the initial time-consuming alignment step, if all the alignment files have been provided in tmp directory (default: none)" << endl;
 	cout << "--part is the number of parts a chromosome is divided into when it is loaded to reduce memory requirement (default: 1)" << endl;
 	cout << "--fastMap makes BLAT alignment faster but may lower LEAF's performance. Useful for large genomes (default: none)" << endl;
+	cout << "--checkRatio checks read alignment ratio to the reference beforehand and warns if the ratio is too low; may take a little more time (default: none)" << endl;
 }
 
 int main(int argc, char * argv[])
@@ -3749,7 +3823,7 @@ int main(int argc, char * argv[])
 	ofstream e, r;
 	string s, sCheck;
 	stringstream ssCheck;
-	int i, tagRead1 = 0, tagRead2 = 0, tagContig = 0, tagGenome = 0, tagExtendedContig = 0, tagKMer = 0, tagDistanceLow = 0, tagDistanceHigh = 0, tagNoAlignment = 1, k = 5, distanceLow = 0, distanceHigh = MAX, chromosomeID, numChromosomes, coverage = 20, tagCoverage = 0, mrl, mrl1, mrl2, tagInsertVariation = 0, insertVariation = 50, tagRemainingContig = 0, part = 1, tagPart = 0, tagFastMap = 0;
+	int i, tagRead1 = 0, tagRead2 = 0, tagContig = 0, tagGenome = 0, tagExtendedContig = 0, tagKMer = 0, tagDistanceLow = 0, tagDistanceHigh = 0, tagNoAlignment = 1, k = 5, distanceLow = 0, distanceHigh = MAX, chromosomeID, numChromosomes, coverage = 20, tagCoverage = 0, mrl, mrl1, mrl2, tagInsertVariation = 0, insertVariation = 50, tagRemainingContig = 0, part = 1, tagPart = 0, tagFastMap = 0, numReads, tagCheckRatio = 0;
 	time_t start, end, startAlign, endAlign;
 
 //	e.open("extended_contigs.fa");
@@ -3986,6 +4060,15 @@ int main(int argc, char * argv[])
 			}
 			tagFastMap = 1;
 		}
+		else if(s == "--checkRatio")
+		{
+			if(tagCheckRatio == 1)
+			{
+				print();
+				return 0;
+			}
+			tagCheckRatio = 1;
+		}
 		else
 		{
 			print();
@@ -4020,16 +4103,21 @@ int main(int argc, char * argv[])
 		parallelMap(distanceLow, distanceHigh, numChromosomes, tagFastMap);
 		endAlign = time(NULL);
 		writeLog(numChromosomes);
+		cout << "(0) Alignment finished" << endl;
 	}
 	else
 	{
 		numChromosomes = readLog();
 		startAlign = endAlign = time(NULL);
+		cout << "(0) Alignment skipped" << endl;
 	}
+
+	if(tagCheckRatio == 1)
+		checkRatio(numChromosomes);
 
 	for(chromosomeID = 0; chromosomeID < numChromosomes; chromosomeID ++)
 	{
-		cout << "CHROMOSOME " << chromosomeID << ": " << endl;
+		cout << endl << "CHROMOSOME " << chromosomeID << ": " << endl;
 		loadGenome(genome, chromosomeID);
 		cout << "(1) chromosome loaded" << endl;
 		loadContigAlignment(genome, chromosomeID);
@@ -4039,7 +4127,7 @@ int main(int argc, char * argv[])
 		extendContigs(genome, coverage, k, chromosomeID);
 		cout << "(4) contigs extended" << endl;
 		scaffoldContigs(genome, chromosomeID);
-		cout << "(5) contigs scaffolded" << endl << endl;
+		cout << "(5) contigs scaffolded" << endl;
 		system("ps euf >> mem.txt");
 		contigs.clear();
 		genome.clear();
@@ -4049,6 +4137,6 @@ int main(int argc, char * argv[])
 	refinement(e, r, tagFastMap);
 
 	end = time(NULL);
-	cout << "FINISHED for " <<  end - start << " seconds (" << endAlign - startAlign << " seconds for alignment) :-)" << endl;
+	cout << endl << "FINISHED for " <<  end - start << " seconds (" << endAlign - startAlign << " seconds for alignment) :-)" << endl;
 }
 

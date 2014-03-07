@@ -57,6 +57,7 @@ AlignGraph: algorithm for secondary de novo genome assembly guided by closely re
    --noAlignment skips the initial time-consuming alignment step, if all the alignment files have been provided in tmp directory (default: none).  
    --part is the number of parts a chromosome is divided into when it is loaded to reduce memory requirement (default: 1).  
    --fastMap makes BLAT alignment faster but may lower the performance of AlignGraph. Useful for large genomes (default: none).  
+   --checkRatio checks read alignment ratio to the reference beforehand and warns if the ratio is too low; may take a little more time (default: none).  
 
 5. Outputs
    * Extended contigs or scaffolds in FASTA format.
