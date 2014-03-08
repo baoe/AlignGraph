@@ -3786,10 +3786,10 @@ void checkRatio(int numChromosomes)
 			aligned ++;
 	ratio = aligned == 0 ? 0 : (double) aligned / reads.size();
 	cout << " - " << ratio * 100 << "% reads aligned ";
-	if(ratio < 0.5 && ratio >= 0.25)
-		cout << "(warning: ratio a little low; may not guarantee good results)" << endl;
-	else if(ratio < 0.25)
-		cout << "(warning: ratio too low; hard to guarantee good results)" << endl;
+//	if(ratio < 0.5 && ratio >= 0.25)
+//		cout << "(warning: ratio a little low; may not guarantee good results)" << endl;
+	if(ratio < 0.25)
+		cout << "(warning: ratio below 25%; hard to guarantee good results)" << endl;
 	else
 		cout << endl;
 }
@@ -3828,7 +3828,7 @@ int main(int argc, char * argv[])
 
 //	e.open("extended_contigs.fa");
 //	r.open("remaining_contigs.fa");
-//	refinement(e, r, 0);
+//	refinement(e, r, 1);
 //	return 1;
 
 	cout << "AlignGraph: algorithm for secondary de novo genome assembly guided by closely related references" << endl;
