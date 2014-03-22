@@ -60,5 +60,5 @@ AlignGraph: algorithm for secondary de novo genome assembly guided by closely re
    --checkRatio checks read alignment ratio to the reference beforehand and warns if the ratio is too low; may take a little more time (default: none).  
 
 5. Outputs
-   * Extended contigs or scaffolds in FASTA format.
+   * Extended contigs or scaffolds in FASTA format. The format of the specification for each extended contig (the string following the '>' of FASTA file) is: `AlignGraphX @ chromosomeID : contigID ; contigID ; contigID ...`, where chromosomeID is the specification of the reference chromosome used to generate the extended contig, X is a number starting from 0 to identify the extended contig for each reference chromosome, and contigIDs are the specifications of the extendable contigs.
    * Remaining contigs or scaffolds not extended in FASTA format.

@@ -15,7 +15,11 @@ using namespace std;
 #define OPTIMIZATION
 
 #define MAX 99999
+#ifdef OPTIMIZATION
 #define INIT_CONTIG_THRESHOLD 0.5//0
+#else
+#define INIT_CONTIG_THRESHOLD 0.4
+#endif
 #define CONTIG_THRESHOLD 0.5//0.1
 #define THRESHOLD 0.6//0.2
 #define SD 0//5
@@ -90,6 +94,10 @@ typedef struct baseStruct
 } Base;
 
 vector<vector<Base> > genome;
+
+vector<string> contigIds;
+
+vector<string> genomeIds;
 
 string itoa(int number)
 {
@@ -3073,10 +3081,12 @@ void refinement(ofstream & e, ofstream & r, int fastMap)
         string buf;
         unsigned int sourceID, targetID, targetStart, targetEnd, targetGap, sourceStart, sourceEnd, sourceGap, sourceSize, targetSize, fr, realSourceSize;
         vector<int> initTags, extdTags;
-        ifstream in, ex, ps;
+        ifstream in, ex, ps, cIn;
         vector<Segment> seg;
 	vector<int> initNums;
 	int ID, IDBak = -1;
+	vector<vector<int> > extdInitMap;
+	vector<int> eim;
 
 #ifdef TEST
 	ofstream ini, ext;
@@ -3214,6 +3224,7 @@ void refinement(ofstream & e, ofstream & r, int fastMap)
                                 {
                                         extdContigs.push_back(contig);
                                         extdTags.push_back(0);
+					extdInitMap.push_back(eim);
                                 }
                                 else
                                         for(j = 0; j < buf.size(); j ++)
@@ -3242,6 +3253,7 @@ void refinement(ofstream & e, ofstream & r, int fastMap)
                                 {
                                         initTags[sourceID] = 1;
                                         extdTags[targetID] = 1;
+					extdInitMap[targetID].push_back(sourceID);
                                 }
                         }
                 }
@@ -3256,7 +3268,11 @@ void refinement(ofstream & e, ofstream & r, int fastMap)
                         for(j = 0; j < extdTags.size(); j ++)
                                 if(extdTags[j] == 1)
                                 {
-                                        e << ">" << i << ": " << seqID << endl;
+//                                      e << ">" << i << ": " << seqID << endl;
+					e << ">" << "AlignGraph" << seqID << " @ " << genomeIds[i] << " : ";
+					for(k = 0; k < extdInitMap[j].size(); k ++)
+						e << contigIds[extdInitMap[j][k]] << " ; ";
+					e << endl;
 #ifdef TEST
 					ext << ">" << i << ": " << seqID << endl;
 #endif
@@ -3291,7 +3307,8 @@ void refinement(ofstream & e, ofstream & r, int fastMap)
                 for(i = 0; i < initTags.size(); i ++)
                         if(initTags[i] == 0)
                         {
-                                r << ">" << i << endl;
+  //                            r << ">" << i << endl;
+				r << ">" << contigIds[i] << endl;
                                 for(j = 0; j < initContigs[i].size(); j ++)
                                 {
                                         r << initContigs[i][j];
@@ -3299,6 +3316,25 @@ void refinement(ofstream & e, ofstream & r, int fastMap)
                                                 r << endl;
                                 }
                         }
+
+		cIn.open("tmp/_chaff.fa");
+		if(cIn.is_open())
+		{
+			while(cIn.good())
+			{
+				getline(cIn, buf);
+				if(buf[0] == 0) break;
+
+				for(i = 0; i < buf.size(); i ++)
+					r << buf[i];
+				r << endl;
+			}
+		}
+		else
+		{
+			cout << "CANNOT OPEN FILE!" << endl;
+			return;
+		}
         }
         else
         {
@@ -3363,15 +3399,17 @@ int maxReadLength(ifstream & r)
 void formalizeInput(ifstream & in, string file)
 {
         string buf;
-        int i, cp, cpp, total;
+        int i, cp, cpp, total, ip;
         unsigned long seqID = 0, count = 0, realSeqID = 0;
 	vector<vector<char> > contigs;
 	vector<char> contig;
-        ofstream out;
+        ofstream out, addOut;
+	string id;
 
 	in.clear();
 	in.seekg(0);
         out.open(file.c_str());
+	addOut.open("tmp/_chaff.fa");
 
 	if(file == "tmp/_contigs.fa")
 	{
@@ -3398,6 +3436,9 @@ void formalizeInput(ifstream & in, string file)
 							out << endl;
 					}
 */
+//					contigIds.push_back(id);
+//					contigIds[contigIds.size() - 1] = buf.substr(1, buf.size());
+					contigIds.push_back(buf.substr(1, buf.size()));
 	                        }
 	                        else
 	                        {
@@ -3447,6 +3488,15 @@ void formalizeInput(ifstream & in, string file)
 					}
 					realSeqID ++;
 				}
+				else
+				{
+					addOut << ">" << contigIds[cp] << endl;
+					for(cpp = 0; cpp < contigs[cp].size(); cpp ++)
+						addOut << contigs[cp][cpp];
+					if((cpp + 1) % 60 == 0 || cpp == contigs[cp].size() - 1)
+						out << endl;
+					contigIds.erase(contigIds.begin() + cp);
+				}
 			}
 	        }
 	        else
@@ -3490,6 +3540,7 @@ int formalizeGenome(ifstream & in, int p)
 	string s;
 	vector<vector<char> > genome;
 	vector<char> g;
+	vector<string> id;
 
         if(in.is_open())
         {
@@ -3501,6 +3552,7 @@ int formalizeGenome(ifstream & in, int p)
                         if(buf[0] == '>')
                         {
 				genome.push_back(g);
+				genomeIds.push_back(buf.substr(1, buf.size()));
                         }
                         else
 			{
@@ -3548,16 +3600,16 @@ int formalizeGenome(ifstream & in, int p)
 int formalizeInput(ifstream & in1, ifstream & in2, string file)
 {
         string buf1, buf2;
-        int i, count;
+        int i;
         unsigned long seqID = 0;
         ofstream out;
+	vector<char> read1, read2;
 
 	in1.clear();
 	in2.clear();
 	in1.seekg(0);
 	in2.seekg(0);
         out.open(file.c_str());
-	count = 0;
 
         if(in1.is_open() && in2.is_open())
         {
@@ -3575,40 +3627,68 @@ int formalizeInput(ifstream & in1, ifstream & in2, string file)
 
                         if(buf1[0] == '>' && buf2[0] == '>')
                         {
-                                getline(in1, buf1);
-				getline(in2, buf2);
-                                out << ">" << seqID << endl;
-                                for(i = 0; i < buf1.size(); i ++)
-                                        out << buf1[i];
-                                out << endl;
-				out << ">" << seqID ++ << endl;
-				for(i = 0; i < buf2.size(); i ++)
-					out << buf2[i];
-				out << endl;
-				count ++;
+				if(read1.size() != 0 && read2.size() != 0)
+				{
+					out << ">" << seqID << endl;
+					for(i = 0; i < read1.size(); i ++)
+						out << read1[i];
+					out << endl;
+					out << ">" << seqID ++ << endl;
+					for(i = 0; i < read2.size(); i ++)
+						out << read2[i];
+					out << endl;
+				}
+
+				read1.clear();
+				read2.clear();
+//                              getline(in1, buf1);
+//				getline(in2, buf2);
+//                              out << ">" << seqID << endl;
+//                              for(i = 0; i < buf1.size(); i ++)
+//                                      out << buf1[i];
+//                              out << endl;
+//				out << ">" << seqID ++ << endl;
+//				for(i = 0; i < buf2.size(); i ++)
+//					out << buf2[i];
+//				out << endl;
                         }
                         else if(buf1[0] != '>' && buf2[0] != '>')
                         {
-                                for(i = 0; i < buf1.size(); i ++)
-                                        out << buf1[i];
-                                out << endl;
-                                for(i = 0; i < buf2.size(); i ++)
-                                        out << buf2[i];
-                                out << endl;
+				for(i = 0; i < buf1.size(); i ++)
+					read1.push_back(buf1[i]);
+				for(i = 0; i < buf2.size(); i ++)
+					read2.push_back(buf2[i]);
+//                              for(i = 0; i < buf1.size(); i ++)
+//                                      out << buf1[i];
+//                              out << endl;
+//                              for(i = 0; i < buf2.size(); i ++)
+//                                      out << buf2[i];
+//                              out << endl;
                         }
 			else
 			{
 				cout << "INVALID INPUT FILE!" << endl;
 				exit(-1);
 			}
-                }
+		}
+			if(read1.size() != 0 && read2.size() != 0)
+                        {
+                                out << ">" << seqID << endl;
+                                for(i = 0; i < read1.size(); i ++)
+                                        out << read1[i];
+                                out << endl;
+                                out << ">" << seqID ++ << endl;
+                                for(i = 0; i < read2.size(); i ++)
+                                        out << read2[i];
+                                out << endl;
+                        }
         }
         else
         {
                 cout << "CANNOT OPEN FILE!" << endl;
                 exit(-1);
         }
-	return count;
+	return seqID;
 }
 
 typedef struct insertStruct
@@ -3636,7 +3716,7 @@ void * task0(void * arg)
 	{
 		command = "bowtie2-build -f tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_genome." + itoa(chromosomeID) + " > bowtie_doc.txt";
 		system(command.c_str());
-		command = "bowtie2 -f --no-mixed -k 5 -p 8 --local --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min G,5,2 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome." + itoa(chromosomeID) + " -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder --very-sensitive-local > tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie 2>> bowtie_doc.txt";// --very-sensitive-local
+		command = "bowtie2 -f --no-mixed -k 5 -p 8 --local --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min G,5,2 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome." + itoa(chromosomeID) + " -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie 2>> bowtie_doc.txt";// --very-sensitive-local
 //                command = "bowtie2 -f --no-mixed -k 5 -p 8 --end-to-end --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min L,-0.24,-0.24 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome." + itoa(chromosomeID) + " -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie 2>> bowtie_doc.txt";
 		system(command.c_str());
 	}
@@ -3686,7 +3766,7 @@ void nonParallelMap(int distanceLow, int distanceHigh, int numChromosomes, int f
 	{
 		command = "bowtie2-build -f tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_genome." + itoa(chromosomeID) + " > bowtie_doc.txt";
 		system(command.c_str());
-		command = "bowtie2 -f --no-mixed -k 5 -p 8 --local --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min G,5,2 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome." + itoa(chromosomeID) + " -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder --very-sensitive-local > tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie 2>> bowtie_doc.txt";// --very-sensitive-local
+		command = "bowtie2 -f --no-mixed -k 5 -p 8 --local --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min G,5,2 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome." + itoa(chromosomeID) + " -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie 2>> bowtie_doc.txt";// --very-sensitive-local
 //		command = "bowtie2 -f --no-mixed -k 5 -p 8 --end-to-end --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min L,-0.24,-0.24 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome." + itoa(chromosomeID) + " -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie 2>> bowtie_doc.txt";
 		system(command.c_str());
 		command = "blat tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_contigs.fa -noHead tmp/_contigs_genome." + itoa(chromosomeID) + ".psl" + s + "> blat_doc.txt";// -minIdentity=50 -q=dnax -t=dnax
@@ -3753,6 +3833,8 @@ void checkRatio(int numChromosomes)
 	for(chromosomeID = 0; chromosomeID < numChromosomes; chromosomeID ++)
 	{
 		s = "tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie";
+		ra.clear();
+		ra.seekg(0);
 		ra.open(s.c_str());
 		if(ra.is_open())
 		{
