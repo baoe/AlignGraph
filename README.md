@@ -66,4 +66,4 @@ AlignGraph: algorithm for secondary de novo genome assembly guided by closely re
 
 <a name="eval"/>
 ### Eval-AlignGraph
-Eval-AlignGraph is the evaluation tool distributed with AlignGraph to generate statistics of the contigs or scaffolds. By default the contigs or scaffolds are aligned to the target genome by BLAT with the -fastMap option, but it can be disabled for higher alignment sensitivity by commenting the FAST macro in the source code.
+Eval-AlignGraph is the evaluation tool distributed with AlignGraph to generate statistics of the contigs or scaffolds. By default the contigs or scaffolds are aligned to the target genome by BLAT with the -fastMap option, but it can be disabled for higher alignment sensitivity by changing the value of FASTMAP macro from 1 to 0 in the source code.

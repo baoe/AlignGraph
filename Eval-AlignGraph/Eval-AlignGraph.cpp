@@ -549,7 +549,7 @@ int main(int argc, char * argv[])
 	system("test -d \"etmp\"; t=$?; if [ $t -eq 1 ]; then mkdir etmp; fi");
 	formalizeGenome(argv[1]);
 	formalizeContigs(argv[2]);
-//	makeAlignment();
+	makeAlignment();
 	cout << "(1) Alignment finished" << endl;
 
         genome = loadGenome();
