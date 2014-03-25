@@ -3,6 +3,7 @@
 [Copy right] (#copyright)  
 [How to cite AlignGraph?] (#cite)  
 [Short Manual] (#manual)  
+[Eval-AlignGraph] (#eval)
 
 <a name="overview"/>
 ### Overview
@@ -62,3 +63,7 @@ AlignGraph: algorithm for secondary de novo genome assembly guided by closely re
 5. Outputs
    * Extended contigs or scaffolds in FASTA format. The format of the specification for each extended contig or scaffold (the string following the '>' of FASTA file) is: `AlignGraphX @ chromosomeID : contig/scaffoldID ; contig/scaffoldID ; contig/scaffoldID ...`, where chromosomeID is the specification of the reference chromosome used to generate the extended contig or scaffold, X is a number starting from 0 to identify the extended contig or scaffold for each reference chromosome, and contig/scaffoldIDs are the specifications of the extendable contigs or scaffolds.
    * Remaining contigs or scaffolds not extended in FASTA format.
+
+<a name="eval"/>
+### Eval-AlignGraph
+Eval-AlignGraph is the evaluation tool distributed with AlignGraph to generate statistics of the contigs or scaffolds. By default the contigs or scaffolds are aligned to the target genome by BLAT with the -fastMap option, but it can be disabled for higher alignment sensitivity by commenting the FAST macro in the source code.
