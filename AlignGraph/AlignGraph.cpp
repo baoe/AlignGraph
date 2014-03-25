@@ -1,3 +1,13 @@
+//**********************************************************************************
+//* Title: AlignGraph: algorithm for secondary de novo genome assembly guided by closely related references
+//* Platform: 64-Bit Linux
+//* Author: Ergude Bao
+//* Affliation: Department of Computer Science & Engineering
+//* University of California, Riverside
+//* Date: 03/24/2011
+//* Copy Right: Artistic License 2.0
+//**********************************************************************************
+
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -3884,8 +3894,8 @@ void print()
 	cout << "--read2 is the the second pair of PE DNA reads in fasta format" << endl;
 	cout << "--contig is the initial contigs in fasta format" << endl;
 	cout << "--genome is the reference genome in fasta format" << endl;
-	cout << "--distanceLow is the lower bound of alignment distance between the first and second pairs of PE DNA reads" << endl;
-	cout << "--distanceHigh is the upper bound of alignment distance between the first and second pairs of PE DNA reads" << endl;
+	cout << "--distanceLow is the lower bound of alignment distance between the first and second pairs of PE DNA reads (recommended: insert length - 1000)" << endl;
+	cout << "--distanceHigh is the upper bound of alignment distance between the first and second pairs of PE DNA reads (recommended: insert length + 1000)" << endl;
 	cout << "Outputs:" << endl;
 	cout << "--extendedContig is the extended contig file in fasta format" << endl;
 	cout << "--remainingContig is the not extended initial contig file in fasta format" << endl;

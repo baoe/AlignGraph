@@ -46,8 +46,8 @@ AlignGraph: algorithm for secondary de novo genome assembly guided by closely re
    --read2 is the the second pair of PE DNA reads in fasta format.  
    --contig is the initial contigs/scaffolds in fasta format.  
    --genome is the reference genome in fasta format.  
-   --distanceLow is the lower bound of alignment distance between the first and second pairs of PE DNA reads.  
-   --distanceHigh is the upper bound of alignment distance between the first and second pairs of PE DNA reads.  
+   --distanceLow is the lower bound of alignment distance between the first and second pairs of PE DNA reads (recommended: insert length - 1000).  
+   --distanceHigh is the upper bound of alignment distance between the first and second pairs of PE DNA reads (recommended: insert length + 1000).  
    Outputs:  
    --extendedContig is the extended contig/scaffold file in fasta format.  
    --remainingContig is the not extended initial contig/scaffold file in fasta format.  

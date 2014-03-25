@@ -1,3 +1,13 @@
+//**********************************************************************************
+//* Title: Eval-AlignGraph: Evaluation tool distributed with AlignGraph
+//* Platform: 64-Bit Linux
+//* Author: Ergude Bao
+//* Affliation: Department of Computer Science & Engineering
+//* University of California, Riverside
+//* Date: 03/24/2011
+//* Copy Right: Artistic License 2.0
+//**********************************************************************************
+
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
