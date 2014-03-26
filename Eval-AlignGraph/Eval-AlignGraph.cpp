@@ -89,7 +89,7 @@ void parseBLAT(string buf, int & targetID, unsigned int & targetStart, unsigned 
                 }
         }
         targetID = atoi(targetIDBuf); //IMPORTANT! HAS TO BE ADJUSTED FOR MORE THAN ONE CHRS
-	if(targetID > 10) targetID = 0;
+//	if(targetID > 10) targetID = 0;
         targetStart = atoi(targetStartBuf);
         targetEnd = atoi(targetEndBuf);
         targetGap = atoi(targetGapBuf);
