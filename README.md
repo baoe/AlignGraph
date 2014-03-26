@@ -57,7 +57,7 @@ AlignGraph: algorithm for secondary de novo genome assembly guided by closely re
    --coverage is the minimum coverage to keep a path in de Bruijn graph (default: 20).  
    --noAlignment skips the initial time-consuming alignment step, if all the alignment files have been provided in tmp directory (default: none).  
    --part is the number of parts a chromosome is divided into when it is loaded to reduce memory requirement (default: 1).  
-   --fastMap makes BLAT alignment faster but may lower the performance of AlignGraph. Useful for large genomes (default: none).  
+   --fastMap makes BLAT alignment faster to avoid super long time waiting on some data but may lower a little sensitivity of AlignGraph (default: none).  
    --checkRatio checks read alignment ratio to the reference beforehand and warns if the ratio is too low; may take a little more time (default: none).  
 
 5. Outputs
@@ -66,4 +66,4 @@ AlignGraph: algorithm for secondary de novo genome assembly guided by closely re
 
 <a name="eval"/>
 ### Eval-AlignGraph
-Eval-AlignGraph is the evaluation tool distributed with AlignGraph to generate statistics of the contigs or scaffolds. By default the contigs or scaffolds are aligned to the target genome by BLAT with the -fastMap option, but it can be disabled for higher alignment sensitivity by changing the value of FASTMAP macro from 1 to 0 in the source code.
+Eval-AlignGraph is the evaluation tool distributed with AlignGraph to generate statistics of the contigs or scaffolds. By default the contigs or scaffolds are aligned to the target genome by BLAT without the -fastMap option, but it can be enabled to avoid super long time waiting on some data with a little sensitivity loss by changing the value of FASTMAP macro from 0 to 1 in the source code.

@@ -3905,7 +3905,7 @@ void print()
 	cout << "--coverage is the minimum coverage to keep a path in de Bruijn graph (default: 20)" << endl;
 	cout << "--noAlignment skips the initial time-consuming alignment step, if all the alignment files have been provided in tmp directory (default: none)" << endl;
 	cout << "--part is the number of parts a chromosome is divided into when it is loaded to reduce memory requirement (default: 1)" << endl;
-	cout << "--fastMap makes BLAT alignment faster but may lower LEAF's performance. Useful for large genomes (default: none)" << endl;
+	cout << "--fastMap makes BLAT alignment faster to avoid super long time waiting on some data but may lower a little sensitivity of AlignGraph (default: none)" << endl;
 	cout << "--checkRatio checks read alignment ratio to the reference beforehand and warns if the ratio is too low; may take a little more time (default: none)" << endl;
 }
 

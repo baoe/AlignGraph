@@ -23,7 +23,7 @@ using namespace std;
 #define IDENTITY 0.1
 #define CUTOFF 1000
 #define SIZE 1000000
-#define FASTMAP 1
+#define FASTMAP 0
 
 typedef struct posStruct
 {
