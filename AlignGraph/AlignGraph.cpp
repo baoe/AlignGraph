@@ -121,7 +121,7 @@ void parseBOWTIE(string buf, unsigned int & targetID, unsigned int & targetStart
 //void parseBOWTIE(char buf[], int & targetID, unsigned int & targetStart, unsigned int & targetInsertion, unsigned int & targetDeletion, unsigned int & sourceSize)
 //{
 	int item = 0, i, j0 = 0, j1 = 0, j2 = 0, j3 = 0, j4 = 0, k, insertion = 0, deletion = 0, total = 0, start = 0, end = 0, tag = 1;
-	char sourceIDBuf[1000] = {'\n'}, targetIDBuf[1000] = {'\n'}, sourceStartBuf[1000] = {'\n'}, targetStartBuf[1000] = {'\n'}, CIGARBuf[1000] = {'\n'}, frBuf[1000] = {'\n'};
+	char sourceIDBuf[1000] = {'\0'}, targetIDBuf[1000] = {'\0'}, sourceStartBuf[1000] = {'\0'}, targetStartBuf[1000] = {'\0'}, CIGARBuf[1000] = {'\0'}, frBuf[1000] = {'\0'};
 	Segment s;
         
 	for(i = 0; i < buf.size(); i ++)
@@ -131,6 +131,8 @@ void parseBOWTIE(string buf, unsigned int & targetID, unsigned int & targetStart
                         item ++;
                         continue;
                 }
+
+		if(buf[i] == '\0') break;
 
 		if(item == 0)
 			sourceIDBuf[j3 ++] = buf[i];
@@ -209,7 +211,7 @@ void parseBOWTIE(string buf, unsigned int & targetID, unsigned int & targetStart
 	sourceEnd = total - end;
 	sourceGap = insertion;
 	sourceSize = total;
-	targetID = targetIDBuf[0] == '*' ? -1 : atoi(targetIDBuf);
+	targetID = targetIDBuf[0] == '*' ? -1 : 0;//atoi(targetIDBuf);
 	targetStart = atoi(targetStartBuf) - 1;//fixed a bug: offset is 1-based
 	targetEnd = targetStart + total + deletion;
 	targetGap = deletion;
@@ -435,6 +437,8 @@ int parseBLAT(string buf, unsigned int & targetID, unsigned int & targetStart, u
 			sp = 0;
                         continue;
                 }
+
+		if(buf[i] == '\0') break;
 
                 if(item == 13)
                         targetIDBuf[j0 ++] = buf[i];
@@ -3082,7 +3086,7 @@ void ref2(ofstream & e, ofstream & r)
 //	ref2(e, r);
 //}
 
-void refinement(ofstream & e, ofstream & r, int fastMap)
+void refinement(ofstream & e, ofstream & r, int fastMap, int uniqueExtension)
 {
         int numChromosomes, i, j, k, seqID;
         string s, s0;
@@ -3094,7 +3098,7 @@ void refinement(ofstream & e, ofstream & r, int fastMap)
         ifstream in, ex, ps, cIn;
         vector<Segment> seg;
 	vector<int> initNums;
-	int ID, IDBak = -1;
+	int ID, IDBak = -1, targetIDBak;
 	vector<vector<int> > extdInitMap;
 	vector<int> eim;
 
@@ -3247,7 +3251,7 @@ void refinement(ofstream & e, ofstream & r, int fastMap)
                         return;
                 }
 
-		line = 0;
+		targetIDBak = -1;
                 s = "tmp/_short_initial_contigs_extended_contigs." + itoa(i) + ".psl";
                 ps.open(s.c_str());
                 if(ps.is_open())
@@ -3255,15 +3259,41 @@ void refinement(ofstream & e, ofstream & r, int fastMap)
                         while(ps.good())
                         {
                                 getline(ps, buf);
-				line ++;
                                 if(buf[0] == 0) break;
 
                                 realSourceSize = parseBLAT(buf, targetID, targetStart, targetEnd, targetGap, sourceID, sourceStart, sourceEnd, sourceGap, sourceSize, seg, fr, targetSize);
                                 if((double)(sourceEnd - sourceStart - sourceGap) / sourceSize >= 0.8 && (double)(targetEnd - targetStart - targetGap) / (double)(targetEnd - targetStart) >= 0.8 && targetSize > realSourceSize + 100 && realSourceSize > targetSize / 100)
                                 {
-                                        initTags[sourceID] = 1;
-                                        extdTags[targetID] = 1;
-					extdInitMap[targetID].push_back(sourceID);
+//                                      initTags[sourceID] = 1;
+//                                      extdTags[targetID] = 1;
+//					extdInitMap[targetID].push_back(sourceID);
+                                        if(uniqueExtension == 1)
+                                        {
+                                                if(initTags[sourceID] > 0 && targetIDBak != -1)
+                                                {
+                                                        if(extdTags[targetIDBak] < extdTags[targetID])
+                                                        {
+                                                                extdTags[targetIDBak] = 0;
+								extdInitMap[targetIDBak].pop_back();
+                                                                extdTags[targetID] = targetSize;
+                                                                initTags[sourceID] = 1;
+								extdInitMap[targetID].push_back(sourceID);
+                                                        }
+                                                }
+                                                else
+                                                {
+                                                        extdTags[targetID] = targetSize;
+                                                        initTags[sourceID] = 1;
+							extdInitMap[targetID].push_back(sourceID);
+                                                }
+                                                targetIDBak = targetID;
+                                        }
+                                        else
+                                        {
+                                                extdTags[targetID] = 1;
+                                                initTags[sourceID] = 1;
+						extdInitMap[targetID].push_back(sourceID);
+                                        }
                                 }
                         }
                 }
@@ -3276,7 +3306,7 @@ void refinement(ofstream & e, ofstream & r, int fastMap)
                 if(e.is_open())
                 {
                         for(j = 0; j < extdTags.size(); j ++)
-                                if(extdTags[j] == 1)
+                                if(extdTags[j] > 0)
                                 {
 //                                      e << ">" << i << ": " << seqID << endl;
 					e << ">" << "AlignGraph" << seqID << " @ " << genomeIds[i] << " : ";
@@ -3546,7 +3576,7 @@ int formalizeGenome(ifstream & in, int p)
 {
         string buf;
         int i, chromosomeID, gp, cp, q;
-        ofstream out;
+        ofstream out, out0;
 	string s;
 	vector<vector<char> > genome;
 	vector<char> g;
@@ -3578,17 +3608,23 @@ int formalizeGenome(ifstream & in, int p)
         }
 
 	chromosomeID = 0;
+	out0.open("tmp/_genome.fa");
 	for(gp = 0; gp < genome.size(); gp ++)
 	{
 		s = "tmp/_genome." + itoa(chromosomeID) + ".fa";
 		out.open(s.c_str());
 		out << ">0" << endl;
+		out0 << ">" << chromosomeID << endl;
 		q = 1;
 		for(cp = 0; cp < genome[gp].size(); cp ++)
 		{
 			out << genome[gp][cp];
+			out0 << genome[gp][cp];
 			if((cp + 1) % 60 == 0 || cp == genome[gp].size() - 1 || ((cp + 1) % (genome[gp].size() / p) == 0 && q < p))
+			{
 				out << endl;
+				out0 << endl;
+			}
 			if(cp != genome[gp].size() - 1 && ((cp + 1) % (genome[gp].size() / p) == 0 && q < p))
 			{
 				out.close();
@@ -3597,6 +3633,7 @@ int formalizeGenome(ifstream & in, int p)
 				s = "tmp/_genome." + itoa(chromosomeID) + ".fa";
 				out.open(s.c_str());
 				out << ">0" << endl;
+				out0 << ">" << chromosomeID << endl; 
 			}
 		}
 		out.close();
@@ -3604,6 +3641,7 @@ int formalizeGenome(ifstream & in, int p)
 	}
 	genome.clear();
 	out.close();
+	out0.close();
 	return chromosomeID;
 }
 
@@ -3707,28 +3745,100 @@ typedef struct insertStruct
 	int distanceHigh;
 	int numChromosomes;
 	int fastMap;
+	int iterativeMap;
 } Insert;
+
+int parseBT(string buf)
+{
+	int i, item = 0, j = 0;
+	char targetIDBuf[10] = {'\0'};
+
+	for(i = 0; i < buf.size(); i ++)
+	{
+		if(buf[i] == '	')
+		{
+			item ++;
+			continue;
+		}
+
+                if(item == 2)
+                {
+                        if(buf[i] == '*') return -1;
+
+                        targetIDBuf[j ++] = buf[i];
+                }
+
+		if(item == 3) break;
+	}
+	return atoi(targetIDBuf);
+}
+
+void distributeAlignments(int numChromosomes)
+{
+	ifstream in;
+	ofstream out;
+	string buf, s;
+	int chromosomeID;
+
+	in.open("tmp/_reads_genome.bowtie");
+	for(chromosomeID = 0; chromosomeID < numChromosomes; chromosomeID ++)
+	{
+		s = "tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie";
+		out.open(s.c_str());
+		if(in.is_open())
+		{
+			while(in.good())
+			{
+				getline(in, buf);
+				if(buf[0] == '@') continue;
+				if(buf[0] == 0) break;
+
+				if(parseBT(buf) == chromosomeID)
+					out << buf << endl;
+			}
+		}
+		else
+		{
+			cout << "CANNOT OPEN FILE!" << endl;
+			exit(-1);
+		}
+		in.clear();
+		in.seekg(0);
+		out.close();
+	}
+	in.close();
+}
 
 void * task0(void * arg)
 {
-	Insert ins;
-	string command;
-	stringstream distanceLowStr, distanceHighStr;
+        Insert ins;
+        string command;
+        stringstream distanceLowStr, distanceHighStr;
 	int chromosomeID;
 
-	ins = *(Insert *) arg;
-	distanceLowStr << ins.distanceLow;
-	distanceHighStr << ins.distanceHigh;
-	ins.numChromosomes;
-	ins.fastMap;
+        ins = *(Insert *) arg;
+        distanceLowStr << ins.distanceLow;
+        distanceHighStr << ins.distanceHigh;
+        ins.numChromosomes;
+        ins.fastMap;
+	ins.iterativeMap;
 
-	for(chromosomeID = 0; chromosomeID < ins.numChromosomes; chromosomeID ++)
+	if(ins.iterativeMap == 1)
 	{
-		command = "bowtie2-build -f tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_genome." + itoa(chromosomeID) + " > bowtie_doc.txt";
+		for(chromosomeID = 0; chromosomeID < ins.numChromosomes; chromosomeID ++)
+		{
+			command = "bowtie2-build -f tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_genome." + itoa(chromosomeID) + " > bowtie_doc.txt";
+			system(command.c_str());
+			command = "bowtie2 -f --no-mixed -k 5 -p 8 --local --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min G,5,2 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome." + itoa(chromosomeID) + " -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie 2>> bowtie_doc.txt";
+			system(command.c_str());
+		}
+	}
+	else
+	{
+		system("bowtie2-build -f tmp/_genome.fa tmp/_genome > bowtie_doc.txt");
+		command = "bowtie2 -f --no-mixed -k 5 -p 8 --local --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min G,5,2 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome.bowtie 2>> bowtie_doc.txt";
 		system(command.c_str());
-		command = "bowtie2 -f --no-mixed -k 5 -p 8 --local --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min G,5,2 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome." + itoa(chromosomeID) + " -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie 2>> bowtie_doc.txt";// --very-sensitive-local
-//                command = "bowtie2 -f --no-mixed -k 5 -p 8 --end-to-end --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min L,-0.24,-0.24 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome." + itoa(chromosomeID) + " -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie 2>> bowtie_doc.txt";
-		system(command.c_str());
+		distributeAlignments(ins.numChromosomes);
 	}
 }
 
@@ -3744,26 +3854,17 @@ void * task1(void * arg)
 	distanceHighStr << ins.distanceHigh;
 	ins.numChromosomes;
 	ins.fastMap;
-
-	for(chromosomeID = 0; chromosomeID < ins.numChromosomes; chromosomeID ++)
-	{
-//		command = "lastdb -c -uMAM8 tmp/_genome." + itoa(chromosomeID) + ".db tmp/_genome." + itoa(chromosomeID) + ".fa > last_doc.txt";
-//		system(command.c_str());
-//		command = "lastal -e34 -m100 tmp/_genome." + itoa(chromosomeID) + ".db tmp/_contigs.fa | last-split > tmp/_contigs_genome." + itoa(chromosomeID) + ".maf 2>> last_doc.txt";
-//		system(command.c_str());
-//		command = "maf-convert.py psl tmp/_contigs_genome." + itoa(chromosomeID) + ".maf > tmp/_contigs_genome." + itoa(chromosomeID) + ".psl 2>> last_doc.txt";
-//		system(command.c_str());
-	}
+	ins.iterativeMap;
 
 	if(ins.fastMap == 1) s = " -fastMap "; else s = " ";
 	for(chromosomeID = 0; chromosomeID < ins.numChromosomes; chromosomeID ++)
 	{
-		command = "blat tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_contigs.fa -noHead tmp/_contigs_genome." + itoa(chromosomeID) + ".psl" + s + "> blat_doc.txt";// -minIdentity=50 -q=dnax -t=dnax
+		command = "blat tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_contigs.fa -noHead tmp/_contigs_genome." + itoa(chromosomeID) + ".psl" + s + "> blat_doc.txt";
 		system(command.c_str());
 	}
 }
 
-void nonParallelMap(int distanceLow, int distanceHigh, int numChromosomes, int fastMap)
+void nonParallelMap(int distanceLow, int distanceHigh, int numChromosomes, int fastMap, int iterativeMap)
 {
         string command, s;
         stringstream distanceLowStr, distanceHighStr;
@@ -3771,20 +3872,42 @@ void nonParallelMap(int distanceLow, int distanceHigh, int numChromosomes, int f
 
 	distanceLowStr << distanceLow;
 	distanceHighStr << distanceHigh;
+
+	if(iterativeMap == 1)
+	{
+		for(chromosomeID = 0; chromosomeID < numChromosomes; chromosomeID ++)
+		{
+			command = "bowtie2-build -f tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_genome." + itoa(chromosomeID) + " > bowtie_doc.txt";
+			system(command.c_str());
+			command = "bowtie2 -f --no-mixed -k 5 -p 8 --local --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min G,5,2 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome." + itoa(chromosomeID) + " -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie 2>> bowtie_doc.txt";// --very-sensitive-local
+//			command = "bowtie2 -f --no-mixed -k 5 -p 8 --end-to-end --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min L,-0.24,-0.24 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome." + itoa(chromosomeID) + " -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie 2>> bowtie_doc.txt";
+			system(command.c_str());
+		}
+	}
+	else
+	{
+	        system("bowtie2-build -f tmp/_genome.fa tmp/_genome > bowtie_doc.txt");
+	        command = "bowtie2 -f --no-mixed -k 5 -p 8 --local --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min G,5,2 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome.bowtie 2>> bowtie_doc.txt";
+	        system(command.c_str());
+	        distributeAlignments(numChromosomes);
+	}
+
 	if(fastMap == 1) s = " -fastmap "; else s = " ";
 	for(chromosomeID = 0; chromosomeID < numChromosomes; chromosomeID ++)
 	{
-		command = "bowtie2-build -f tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_genome." + itoa(chromosomeID) + " > bowtie_doc.txt";
-		system(command.c_str());
-		command = "bowtie2 -f --no-mixed -k 5 -p 8 --local --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min G,5,2 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome." + itoa(chromosomeID) + " -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie 2>> bowtie_doc.txt";// --very-sensitive-local
-//		command = "bowtie2 -f --no-mixed -k 5 -p 8 --end-to-end --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min L,-0.24,-0.24 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome." + itoa(chromosomeID) + " -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie 2>> bowtie_doc.txt";
-		system(command.c_str());
+//              command = "lastdb -c -uMAM8 tmp/_genome." + itoa(chromosomeID) + ".db tmp/_genome." + itoa(chromosomeID) + ".fa > last_doc.txt";
+//              system(command.c_str());
+//              command = "lastal -e34 -m100 tmp/_genome." + itoa(chromosomeID) + ".db tmp/_contigs.fa | last-split > tmp/_contigs_genome." + itoa(chromosomeID) + ".maf 2>> last_doc.txt";
+//              system(command.c_str());
+//              command = "maf-convert.py psl tmp/_contigs_genome." + itoa(chromosomeID) + ".maf > tmp/_contigs_genome." + itoa(chromosomeID) + ".psl 2>> last_doc.txt";
+//              system(command.c_str());
+
 		command = "blat tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_contigs.fa -noHead tmp/_contigs_genome." + itoa(chromosomeID) + ".psl" + s + "> blat_doc.txt";// -minIdentity=50 -q=dnax -t=dnax
 		system(command.c_str());
 	}
 }
 
-void parallelMap(int distanceLow, int distanceHigh, int numChromosomes, int fastMap)
+void parallelMap(int distanceLow, int distanceHigh, int numChromosomes, int fastMap, int iterativeMap)
 {
 	pthread_t t0, t1;
 	Insert ins;
@@ -3793,8 +3916,9 @@ void parallelMap(int distanceLow, int distanceHigh, int numChromosomes, int fast
 	ins.distanceHigh = distanceHigh;
 	ins.numChromosomes = numChromosomes;
 	ins.fastMap = fastMap;
-	if(pthread_create(&t0, NULL, task0, &ins) != 0) {nonParallelMap(distanceLow, distanceHigh, numChromosomes, fastMap); return;}
-	if(pthread_create(&t1, NULL, task1, &ins) != 0) {nonParallelMap(distanceLow, distanceHigh, numChromosomes, fastMap); return;}
+	ins.iterativeMap = iterativeMap;
+	if(pthread_create(&t0, NULL, task0, &ins) != 0) {nonParallelMap(distanceLow, distanceHigh, numChromosomes, fastMap, iterativeMap); return;}
+	if(pthread_create(&t1, NULL, task1, &ins) != 0) {nonParallelMap(distanceLow, distanceHigh, numChromosomes, fastMap, iterativeMap); return;}
 	
 	if(pthread_join(t0, NULL) != 0) {perror("Thread join faied"); exit(EXIT_FAILURE);}
 	if(pthread_join(t1, NULL) != 0) {perror("Thread join faied"); exit(EXIT_FAILURE);}
@@ -3888,7 +4012,7 @@ void checkRatio(int numChromosomes)
 
 void print()
 {
-	cout << "AlignGraph --read1 reads_1.fa --read2 reads_2.fa --contig contigs.fa --genome genome.fa --distanceLow distanceLow --distanceHigh distancehigh --extendedContig extendedContigs.fa --remainingContig remainingContigs.fa [--kMer k --insertVariation insertVariation --covereage coverage --noAlignment --part p --checkRatio]" << endl;
+	cout << "AlignGraph --read1 reads_1.fa --read2 reads_2.fa --contig contigs.fa --genome genome.fa --distanceLow distanceLow --distanceHigh distancehigh --extendedContig extendedContigs.fa --remainingContig remainingContigs.fa [--kMer k --insertVariation insertVariation --covereage coverage --noAlignment --part p --ratioCheck --iterativeMap]" << endl;
 	cout << "Inputs:" << endl;
 	cout << "--read1 is the the first pair of PE DNA reads in fasta format" << endl;
 	cout << "--read2 is the the second pair of PE DNA reads in fasta format" << endl;
@@ -3906,7 +4030,8 @@ void print()
 	cout << "--noAlignment skips the initial time-consuming alignment step, if all the alignment files have been provided in tmp directory (default: none)" << endl;
 	cout << "--part is the number of parts a chromosome is divided into when it is loaded to reduce memory requirement (default: 1)" << endl;
 	cout << "--fastMap makes BLAT alignment faster to avoid super long time waiting on some data but may lower a little sensitivity of AlignGraph (default: none)" << endl;
-	cout << "--checkRatio checks read alignment ratio to the reference beforehand and warns if the ratio is too low; may take a little more time (default: none)" << endl;
+	cout << "--ratioCheck checks read alignment ratio to the reference beforehand and warns if the ratio is too low; may take a little more time (default: none)" << endl;
+	cout << "--iterativeMap aligns reads to one chromosome and then another rather than directly to the genome, which increases sensitivity while loses precision (default: none)" << endl;
 }
 
 int main(int argc, char * argv[])
@@ -3915,12 +4040,16 @@ int main(int argc, char * argv[])
 	ofstream e, r;
 	string s, sCheck;
 	stringstream ssCheck;
-	int i, tagRead1 = 0, tagRead2 = 0, tagContig = 0, tagGenome = 0, tagExtendedContig = 0, tagKMer = 0, tagDistanceLow = 0, tagDistanceHigh = 0, tagNoAlignment = 1, k = 5, distanceLow = 0, distanceHigh = MAX, chromosomeID, numChromosomes, coverage = 20, tagCoverage = 0, mrl, mrl1, mrl2, tagInsertVariation = 0, insertVariation = 50, tagRemainingContig = 0, part = 1, tagPart = 0, tagFastMap = 0, numReads, tagCheckRatio = 0;
+	int i, tagRead1 = 0, tagRead2 = 0, tagContig = 0, tagGenome = 0, tagExtendedContig = 0, tagKMer = 0, tagDistanceLow = 0, tagDistanceHigh = 0, tagNoAlignment = 1, k = 5, distanceLow = 0, distanceHigh = MAX, chromosomeID, numChromosomes, coverage = 20, tagCoverage = 0, mrl, mrl1, mrl2, tagInsertVariation = 0, insertVariation = 50, tagRemainingContig = 0, part = 1, tagPart = 0, tagFastMap = 0, numReads, tagRatioCheck = 0, tagUniqueExtension = 0, tagIterativeMap = 0;
 	time_t start, end, startAlign, endAlign;
 
+//	g.open(argv[8]);
+//	formalizeGenome(g, 1);
+//	c.open(argv[6]);
+//	formalizeInput(c, "tmp/_contigs.fa");
 //	e.open("extended_contigs.fa");
 //	r.open("remaining_contigs.fa");
-//	refinement(e, r, 1);
+//	refinement(e, r, 1, 0);
 //	return 1;
 
 	cout << "AlignGraph: algorithm for secondary de novo genome assembly guided by closely related references" << endl;
@@ -4152,15 +4281,33 @@ int main(int argc, char * argv[])
 			}
 			tagFastMap = 1;
 		}
-		else if(s == "--checkRatio")
+		else if(s == "--ratioCheck")
 		{
-			if(tagCheckRatio == 1)
+			if(tagRatioCheck == 1)
 			{
 				print();
 				return 0;
 			}
-			tagCheckRatio = 1;
+			tagRatioCheck = 1;
 		}
+		else if(s == "--uniqueExtension")
+		{
+			if(tagUniqueExtension == 1)
+			{
+				print();
+				return 0;
+			}
+			tagUniqueExtension = 1;
+		}
+		else if(s == "--iterativeMap")
+                {
+                        if(tagIterativeMap == 1)
+                        {
+                                print();
+                                return 0;
+                        }
+                        tagIterativeMap = 1;
+                }
 		else
 		{
 			print();
@@ -4192,19 +4339,21 @@ int main(int argc, char * argv[])
 		formalizeInput(c, "tmp/_contigs.fa");
 		numChromosomes = formalizeGenome(g, part);
 		startAlign = time(NULL);
-		parallelMap(distanceLow, distanceHigh, numChromosomes, tagFastMap);
+		parallelMap(distanceLow, distanceHigh, numChromosomes, tagFastMap, tagIterativeMap);
 		endAlign = time(NULL);
-		writeLog(numChromosomes);
+//		writeLog(numChromosomes);
 		cout << "(0) Alignment finished" << endl;
 	}
 	else
 	{
-		numChromosomes = readLog();
+		formalizeInput(c, "tmp/_contigs.fa");
+		numChromosomes = formalizeGenome(g, part);
+//		numChromosomes = readLog();
 		startAlign = endAlign = time(NULL);
 		cout << "(0) Alignment skipped" << endl;
 	}
 
-	if(tagCheckRatio == 1)
+	if(tagRatioCheck == 1)
 		checkRatio(numChromosomes);
 
 	for(chromosomeID = 0; chromosomeID < numChromosomes; chromosomeID ++)
@@ -4226,7 +4375,7 @@ int main(int argc, char * argv[])
 		sourceIDBak = -1;
 	}
 
-	refinement(e, r, tagFastMap);
+	refinement(e, r, tagFastMap, tagUniqueExtension);
 
 	end = time(NULL);
 	cout << endl << "FINISHED for " <<  end - start << " seconds (" << endAlign - startAlign << " seconds for alignment) :-)" << endl;
