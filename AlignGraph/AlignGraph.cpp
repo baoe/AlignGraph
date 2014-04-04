@@ -3439,12 +3439,13 @@ int maxReadLength(ifstream & r)
 void formalizeInput(ifstream & in, string file)
 {
         string buf;
-        int i, cp, cpp, total, ip;
+        int i, cp, cpp, total, sp;
         unsigned long seqID = 0, count = 0, realSeqID = 0;
 	vector<vector<char> > contigs;
 	vector<char> contig;
         ofstream out, addOut;
 	string id;
+	vector<string> cIds;
 
 	in.clear();
 	in.seekg(0);
@@ -3478,7 +3479,7 @@ void formalizeInput(ifstream & in, string file)
 */
 //					contigIds.push_back(id);
 //					contigIds[contigIds.size() - 1] = buf.substr(1, buf.size());
-					contigIds.push_back(buf.substr(1, buf.size()));
+					cIds.push_back(buf.substr(1, buf.size()));
 	                        }
 	                        else
 	                        {
@@ -3530,14 +3531,20 @@ void formalizeInput(ifstream & in, string file)
 				}
 				else
 				{
-					addOut << ">" << contigIds[cp] << endl;
+					addOut << ">" << cIds[cp] << endl;
 					for(cpp = 0; cpp < contigs[cp].size(); cpp ++)
+					{
 						addOut << contigs[cp][cpp];
-					if((cpp + 1) % 60 == 0 || cpp == contigs[cp].size() - 1)
-						out << endl;
-					contigIds.erase(contigIds.begin() + cp);
+						if((cpp + 1) % 60 == 0 || cpp == contigs[cp].size() - 1)
+							addOut << endl;
+					}
+					cIds[cp] = "\0";
 				}
 			}
+
+			for(sp = 0; sp < cIds.size(); sp ++)
+				if(cIds[sp] != "\0")
+					contigIds.push_back(cIds[sp]);
 	        }
 	        else
 	        {
