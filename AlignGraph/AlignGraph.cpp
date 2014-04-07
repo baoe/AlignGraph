@@ -21,7 +21,7 @@
 #include <time.h>
 using namespace std;
 
-//#define TEST
+#define TEST
 #define OPTIMIZATION
 
 #define MAX 99999
@@ -3086,9 +3086,9 @@ void ref2(ofstream & e, ofstream & r)
 //	ref2(e, r);
 //}
 
-void refinement(ofstream & e, ofstream & r, int fastMap, int uniqueExtension)
+void refinement(ofstream & e, ofstream & r, int fastMap, int uniqueExtension, int numChromosomes)
 {
-        int numChromosomes, i, j, k, seqID;
+        int i, j, k, seqID;
         string s, s0;
         vector<vector<char> > initContigs, extdContigs;
         vector<char> contig;
@@ -3108,7 +3108,7 @@ void refinement(ofstream & e, ofstream & r, int fastMap, int uniqueExtension)
 	ext.open("ex.fa");
 #endif
 
-        numChromosomes = readLog();
+//      numChromosomes = readLog();
 
 ///////////////////////////////////////////////////////////////////for easy alignment/////////////////////////////////////////////////////////////////////////////////////
 
@@ -4050,14 +4050,14 @@ int main(int argc, char * argv[])
 	int i, tagRead1 = 0, tagRead2 = 0, tagContig = 0, tagGenome = 0, tagExtendedContig = 0, tagKMer = 0, tagDistanceLow = 0, tagDistanceHigh = 0, tagNoAlignment = 1, k = 5, distanceLow = 0, distanceHigh = MAX, chromosomeID, numChromosomes, coverage = 20, tagCoverage = 0, mrl, mrl1, mrl2, tagInsertVariation = 0, insertVariation = 50, tagRemainingContig = 0, part = 1, tagPart = 0, tagFastMap = 0, numReads, tagRatioCheck = 0, tagUniqueExtension = 0, tagIterativeMap = 0;
 	time_t start, end, startAlign, endAlign;
 
-//	g.open(argv[8]);
-//	formalizeGenome(g, 1);
-//	c.open(argv[6]);
-//	formalizeInput(c, "tmp/_contigs.fa");
-//	e.open("extended_contigs.fa");
-//	r.open("remaining_contigs.fa");
-//	refinement(e, r, 1, 0);
-//	return 1;
+	g.open(argv[8]);
+	numChromosomes = formalizeGenome(g, 1);
+	c.open(argv[6]);
+	formalizeInput(c, "tmp/_contigs.fa");
+	e.open("extended_contigs.fa");
+	r.open("remaining_contigs.fa");
+	refinement(e, r, 1, 0, numChromosomes);
+	return 1;
 
 	cout << "AlignGraph: algorithm for secondary de novo genome assembly guided by closely related references" << endl;
 	cout << "By Ergude Bao, CS Department, UC-Riverside. All Rights Reserved" << endl << endl;
@@ -4382,7 +4382,7 @@ int main(int argc, char * argv[])
 		sourceIDBak = -1;
 	}
 
-	refinement(e, r, tagFastMap, tagUniqueExtension);
+	refinement(e, r, tagFastMap, tagUniqueExtension, numChromosomes);
 
 	end = time(NULL);
 	cout << endl << "FINISHED for " <<  end - start << " seconds (" << endAlign - startAlign << " seconds for alignment) :-)" << endl;
