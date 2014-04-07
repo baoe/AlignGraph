@@ -21,7 +21,7 @@
 #include <time.h>
 using namespace std;
 
-#define TEST
+//#define TEST
 #define OPTIMIZATION
 
 #define MAX 99999
