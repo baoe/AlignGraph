@@ -524,9 +524,9 @@ void formalizeContigs(char argv[])
 void makeAlignment()
 {
 	if(FASTMAP == 1)
-		system("blat etmp/_genome.fa etmp/_contigs.fa -noHead etmp/_contigs_genome.psl -fastMap");
+		system("blat etmp/_genome.fa etmp/_contigs.fa -noHead etmp/_contigs_genome.psl -fastMap > blat_doc.txt");
 	else
-		system("blat etmp/_genome.fa etmp/_contigs.fa -noHead etmp/_contigs_genome.psl");
+		system("blat etmp/_genome.fa etmp/_contigs.fa -noHead etmp/_contigs_genome.psl > blat_doc.txt");
 }
 
 void print()
