@@ -63,7 +63,7 @@ AlignGraph: algorithm for secondary de novo genome assembly guided by closely re
    --misassemblyRemoval detects and then breaks at or removes misassembed regions (default: none).  
 
 5. Outputs
-   * Extended contigs or scaffolds in FASTA format. The format of the specification for each extended contig or scaffold (the string following the '>' of FASTA file) is: `AlignGraphX @ chromosomeID : contig/scaffoldID ; contig/scaffoldID ; contig/scaffoldID ...`, where chromosomeID is the specification of the reference chromosome used to generate the extended contig or scaffold, X is a number starting from 0 to identify the extended contig or scaffold for each reference chromosome, and contig/scaffoldIDs are the specifications of the extendable contigs or scaffolds.
+   * Extended contigs or scaffolds in FASTA format. The format of the specification for each extended contig or scaffold (the string following the '>' of FASTA file) is: `AlignGraphX @ chromosomeID : contig/scaffoldID ; contig/scaffoldID ; contig/scaffoldID ... : partY`, where chromosomeID is the specification of the reference chromosome used to generate the extended contig or scaffold, X is a number starting from 0 to identify the extended contig or scaffold for each reference chromosome, and contig/scaffoldIDs are the specifications of the extendable contigs or scaffolds. If --misassemblyRemoval is specified, partY shows the Y-th subcontig or subscaffold of the misassembled contig or scaffold split at misassemblies.
    * Remaining contigs or scaffolds not extended in FASTA format.
 
 <a name="eval"/>
