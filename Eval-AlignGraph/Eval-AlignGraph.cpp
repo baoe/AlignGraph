@@ -34,8 +34,6 @@ typedef struct posStruct
         unsigned int targetEnd;
         unsigned int sourceGap;
         unsigned int targetGap;
-        unsigned int sourceG;
-        unsigned int targetG;
         int fr;
         int alignedBases;
 } pos;
@@ -121,9 +119,10 @@ void parseBLAT(string buf, int & targetID, unsigned int & targetStart, unsigned 
 	alignedBases = ab;
 }
 
-int overlap(unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2)
+int conflict(unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2)
 {
-        if(x1 <= x2 && x2 <= y1 && y1 <= y2 && (int)y1 - (int)x2 >= 100 || x2 <= x1 && x1 <= y2 && y2 <= y1 && (int)y2 - (int)x1 >= 100 || x1 <= x2 && x2 <= y2 && y2 <= y1 && (int)y2 - (int)x2 >= 100 || x2 <= x1 && x1 <= y1 && y1 <= y2 && (int)y1 - (int)x1 >= 100)
+        if(x1 <= x2 && x2 <= y1 && y1 <= y2 && (int)y1 - (int)x2 >= 100 || x2 <= x1 && x1 <= y2 && y2 <= y1 && (int)y2 - (int)x1 >= 100 || x1 <= x2 && x2 <= y2 && y2 <= y1 && (int)y2 - (int)x2 >= 100 || x2 <= x1 && x1 <= y1 && y1 <= y2 && (int)y1 - (int)x1 >= 100 ||
+	x1 <= x2 && y2 <= y1 || x2 <= x1 && y1 <= y2)
                 return 1;
         else
                 return 0;
@@ -238,7 +237,7 @@ vector<vector<pos> > loadContigsAlignment(int size)
 			{
 				keep = 1;
 				for(i = 0; i < positions[sourceID].size(); i ++)
-					if(positions[sourceID][i].targetID != -1 && targetID == positions[sourceID][i].targetID && overlap(sourceStart, sourceEnd, positions[sourceID][i].sourceStart, positions[sourceID][i].sourceEnd))// added: targetID == positions[sourceID][i].targetID
+					if(positions[sourceID][i].targetID != -1 && targetID == positions[sourceID][i].targetID && conflict(sourceStart, sourceEnd, positions[sourceID][i].sourceStart, positions[sourceID][i].sourceEnd))
 					{
 						if(sourceEnd - sourceStart < positions[sourceID][i].sourceEnd - positions[sourceID][i].sourceStart)
 							keep = 0;
@@ -281,27 +280,20 @@ vector<vector<pos> > loadContigsAlignment(int size)
 					positions[i][j].targetGap = positions[i][j].targetGap + positions[i][k].targetGap;
 					positions[i][j].alignedBases = positions[i][j].alignedBases + positions[i][k].alignedBases;
 					positions[i][k] = p0;
+					k = 0;
 				}
 			}
 		}
+
 	for(i = 0; i < positions.size(); i ++)
-	{
-		for(j = positions[i].size() - 1; j >= 0; j --)
-		{
-			for(k = positions[i].size() - 1; k >= 0; k --)
-			{
-                                if(k != j && positions[i][j].targetID != -1 && positions[i][k].targetID != -1 && positions[i][j].targetID == positions[i][k].targetID && close(positions[i][j].sourceStart, positions[i][k].sourceEnd, abs((int)positions[i][j].sourceEnd - (int)positions[i][j].sourceStart) / 10) && close(positions[i][j].targetEnd, positions[i][k].targetStart, abs((int)positions[i][j].targetEnd - (int)positions[i][j].targetStart) / 10) && positions[i][j].fr == positions[i][k].fr)
-                                {
-                                        positions[i][j].sourceStart = positions[i][k].sourceStart;
-                                        positions[i][j].targetEnd = positions[i][k].targetEnd;
-					positions[i][j].sourceGap = positions[i][j].sourceGap + positions[i][k].sourceGap;
-					positions[i][j].targetGap = positions[i][j].targetGap + positions[i][k].targetGap;
-					positions[i][j].alignedBases = positions[i][j].alignedBases + positions[i][k].alignedBases;
-                                        positions[i][k] = p0;
-                                }				
-			}
-		}
-	}
+		for(j = 0; j < positions[i].size(); j ++)
+			for(k = j + 1; k < positions[i].size(); k ++)
+				if(positions[i][j].targetID != 1 && positions[i][k].targetID != -1 && conflict(positions[i][j].sourceStart, positions[i][j].sourceEnd, positions[i][k].sourceStart, positions[i][k].sourceEnd) == 1)
+					if(positions[i][j].sourceEnd - positions[i][j].sourceStart > positions[i][k].sourceEnd - positions[i][k].sourceStart)
+						positions[i][k] = p0;
+					else
+						positions[i][j] = p0;
+//remove duplicated alignments to different chrs
 
 	return positions;
 }
