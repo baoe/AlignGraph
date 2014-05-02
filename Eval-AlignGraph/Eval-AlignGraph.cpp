@@ -173,7 +173,7 @@ vector<vector<char> > loadContigs()
 	ifstream in;
 	string buf;
 	int i, j, initIDBak = -1;
-	char initIDBuf[10];
+	char initIDBuf[100];
 	vector<vector<char> > initContigs;
 	vector<char> ic;
 
@@ -188,7 +188,7 @@ vector<vector<char> > loadContigs()
 			if(buf[0] == '>')
 			{
 				for(i = 1, j = 0; i < buf.size() && buf[i] != '.'; i ++, j ++) initIDBuf[j] = buf[i];
-				for(; j < 10; j ++) initIDBuf[j] = '\0';
+				for(; j < 100; j ++) initIDBuf[j] = '\0';
 				if(atoi(initIDBuf) > initIDBak)
 				{
 					initContigs.push_back(ic);
@@ -267,6 +267,7 @@ vector<vector<pos> > loadContigsAlignment(int size)
 	}
 
 	for(i = 0; i < positions.size(); i ++)
+	{
 		for(j = 0; j < positions[i].size(); j ++)
 		{
 			for(k = 0; k < positions[i].size(); k ++)
@@ -284,15 +285,21 @@ vector<vector<pos> > loadContigsAlignment(int size)
 				}
 			}
 		}
+	}
 
 	for(i = 0; i < positions.size(); i ++)
 		for(j = 0; j < positions[i].size(); j ++)
 			for(k = j + 1; k < positions[i].size(); k ++)
-				if(positions[i][j].targetID != 1 && positions[i][k].targetID != -1 && conflict(positions[i][j].sourceStart, positions[i][j].sourceEnd, positions[i][k].sourceStart, positions[i][k].sourceEnd) == 1)
+			{
+				if(positions[i][j].targetID != -1 && positions[i][k].targetID != -1 && conflict(positions[i][j].sourceStart, positions[i][j].sourceEnd, positions[i][k].sourceStart, positions[i][k].sourceEnd) == 1)
+				{
 					if(positions[i][j].sourceEnd - positions[i][j].sourceStart > positions[i][k].sourceEnd - positions[i][k].sourceStart)
 						positions[i][k] = p0;
 					else
 						positions[i][j] = p0;
+						break;
+				}
+			}
 //remove duplicated alignments to different chrs
 
 	return positions;
