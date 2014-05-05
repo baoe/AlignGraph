@@ -21,7 +21,7 @@
 #include <time.h>
 using namespace std;
 
-#define TEST
+//#define TEST
 #define OPTIMIZATION
 
 #define MAX 99999
@@ -180,10 +180,10 @@ string itoa(int number)
 
 void parseBOWTIE(string buf, unsigned int & targetID, unsigned int & targetStart, unsigned int & targetEnd, unsigned int & targetGap, unsigned int & sourceID, unsigned int & sourceStart, unsigned int & sourceEnd, unsigned int & sourceGap, unsigned int & sourceSize, vector<Segment> & seg, unsigned int & fr)
 {
-	int item = 0, i, j0 = 0, j1 = 0, j2 = 0, j3 = 0, j4 = 0, k, insertion = 0, deletion = 0, total = 0, start = 0, end = 0, tag = 1;
-	char sourceIDBuf[1000] = {'\0'}, targetIDBuf[1000] = {'\0'}, sourceStartBuf[1000] = {'\0'}, targetStartBuf[1000] = {'\0'}, CIGARBuf[1000] = {'\0'}, frBuf[1000] = {'\0'};
+	int item = 0, i, j, j0 = 0, j1 = 0, j2 = 0, j3 = 0, j4 = 0, k, insertion = 0, deletion = 0, total = 0, start = 0, end = 0, tag = 1, IDTag = 0;
+	char sourceIDBuf[100] = {'\0'}, targetIDBuf[100] = {'\0'}, sourceStartBuf[100] = {'\0'}, targetStartBuf[100] = {'\0'}, CIGARBuf[100] = {'\0'}, frBuf[100] = {'\0'}, realTargetIDBuf[100] = {'\0'};
 	Segment s;
-        
+
 	for(i = 0; i < buf.size(); i ++)
         {
                 if(buf[i] == '	')
@@ -206,28 +206,31 @@ void parseBOWTIE(string buf, unsigned int & targetID, unsigned int & targetStart
 				fr = ((atoi(frBuf) & 0x00000010) == 0x00000010) ? 1 : 0;
 				targetID = targetStart = targetEnd = targetGap = sourceStart = sourceEnd = sourceGap = sourceSize = -1;
 				return;
-			}	
-			targetIDBuf[j0 ++] = buf[i];
+			}
+			if(buf[i] == '.') IDTag = 1;
+			if(IDTag == 0) targetIDBuf[j0 ++] = buf[i];
 		}
 		if(item == 3)
 			targetStartBuf[j1 ++] = buf[i];
 		if(item == 5)
 			if(buf[i] == '0' || buf[i] == '1' || buf[i] == '2' || buf[i] == '3' || buf[i] == '4' || buf[i] == '5' || buf[i] == '6' || buf[i] == '7' || buf[i] == '8' || buf[i] == '9')
+			{
 				CIGARBuf[j2 ++] = buf[i];
+			}
 			else if(buf[i] == 'I')
 			{
 				insertion = insertion + atoi(CIGARBuf);
 				total = total + atoi(CIGARBuf);
-				for(k = 0; k < 1000; k ++)
-					CIGARBuf[k] = '\n';
+				for(k = 0; k < j2; k ++)
+					CIGARBuf[k] = '\0';
 				j2 = 0;
 			}
 			else if(buf[i] == 'D')
 			{
 				deletion = deletion + atoi(CIGARBuf);
 //				total = total + atoi(CIGARBuf);
-				for(k = 0; k < 1000; k ++)
-					CIGARBuf[k] = '\n';
+				for(k = 0; k < j2; k ++)
+					CIGARBuf[k] = '\0';
 				j2 = 0;
 			}
 			else if(buf[i] == 'M')
@@ -237,24 +240,24 @@ void parseBOWTIE(string buf, unsigned int & targetID, unsigned int & targetStart
 				s.size = atoi(CIGARBuf);
 				seg.push_back(s);
 				total = total + atoi(CIGARBuf);
-				for(k = 0; k < 1000; k ++)
-					CIGARBuf[k] = '\n';
+				for(k = 0; k < j2; k ++)
+					CIGARBuf[k] = '\0';
 				j2 = tag = 0;
 			}
 			else if(buf[i] == 'S' && tag)
 			{
 				start = atoi(CIGARBuf);
 				total = total + atoi(CIGARBuf);
-				for(k = 0; k < 1000; k ++)
-					CIGARBuf[k] = '\n';
+				for(k = 0; k < j2; k ++)
+					CIGARBuf[k] = '\0';
 				j2 = tag = 0;
 			}
 			else if(buf[i] == 'S')
 			{
 				end = atoi(CIGARBuf);
 				total = total + atoi(CIGARBuf);
-				for(k = 0; k < 1000; k ++)
-					CIGARBuf[k] = '\n';
+				for(k = 0; k < j2; k ++)
+					CIGARBuf[k] = '\0';
 				j2 = 0;
 			}
 			else
@@ -271,9 +274,12 @@ void parseBOWTIE(string buf, unsigned int & targetID, unsigned int & targetStart
 	sourceEnd = total - end;
 	sourceGap = insertion;
 	sourceSize = total;
-	targetID = targetIDBuf[0] == '*' ? -1 : 0;// atoi(targetIDBuf);
+	if(IDTag == 0)
+		targetID = targetIDBuf[0] == '*' ? -1 : 0;// atoi(targetIDBuf);
+	else
+		targetID = targetIDBuf[0] == '*' ? -1 : atoi(targetIDBuf);
 	targetStart = atoi(targetStartBuf) - 1;// offset is 1-based
-	targetEnd = targetStart + total + deletion;
+	targetEnd = targetStart + total + deletion - insertion;// added: - insertion
 	targetGap = deletion;
 	fr = ((atoi(frBuf) & 0x00000010) == 0x00000010) ? 1 : 0;
 }
@@ -3526,13 +3532,53 @@ void makeAlignment(int distanceLow, int distanceHigh, string id)
 	system(command.c_str());
 }
 
-vector<vector<ContigBase> > loadContigs(string id)
+vector<vector<ContigBase> > loadPreContigs(string id)
+{
+	ifstream c;
+	string s, buf;
+	vector<vector<ContigBase> > contigs;
+	vector<ContigBase> ic;
+	ContigBase cb;
+	int i;
+
+	s = "tmp/_" + id + "_contigs.fa";
+	c.open(s.c_str());
+	if(c.is_open())
+	{
+		while(c.good())
+		{
+			getline(c, buf);
+			if(buf[0] == 0) break;
+
+			if(buf[0] == '>')
+				contigs.push_back(ic);
+			else
+			{
+                                for(i = 0; i < buf.size(); i ++)
+                                {
+                                        cb.base = buf[i];
+                                        cb.coverage = 0;
+                                        contigs[contigs.size() - 1].push_back(cb);
+                                }
+			}
+		}
+	}
+	else
+	{
+		cout << "CANNOT OPEN FILE!" << endl;
+		exit(-1);
+	}
+
+	return contigs;
+}
+
+vector<vector<ContigBase> > loadContigs(string id, vector<vector<ContigBase> > preContigs)
 {
         ifstream c;
         string buf, s;
-        int i, j, initIDBak = -1;
-        char initIDBuf[10];
-        vector<vector<ContigBase> > initContigs;
+        int i, j, IDBak = -1;
+        char IDBuf[10];
+        vector<vector<ContigBase> > contigs;
 	vector<ContigBase> ic;
 	ContigBase cb;
 
@@ -3550,23 +3596,18 @@ vector<vector<ContigBase> > loadContigs(string id)
 				for(i = 1; i < buf.size() && buf[i] != '.'; i ++);
 				i ++;
 				for(j = 0; i < buf.size(); i ++, j ++)
-					initIDBuf[j] = buf[i];
-				for(; j < 10; j ++) initIDBuf[j] = '\0';
+					IDBuf[j] = buf[i];
+				for(; j < 10; j ++) IDBuf[j] = '\0';
 
-                                if(atoi(initIDBuf) > initIDBak)
+                                if(atoi(IDBuf) > IDBak)
                                 {
-                                        initContigs.push_back(ic);
-                                        initIDBak = atoi(initIDBuf);
+                                        contigs.push_back(ic);
+                                        IDBak = atoi(IDBuf);
                                 }
-                                continue;
-                        }
-                        else
-                                for(i = 0; i < buf.size(); i ++)
-				{
-					cb.base = buf[i];
-					cb.coverage = 0;
-                                        initContigs[initContigs.size() - 1].push_back(cb);
-				}
+                                
+				for(i = 0; i < preContigs[IDBak].size(); i ++)
+					contigs[contigs.size() - 1].push_back(preContigs[IDBak][i]);
+			}
                 }
         }
         else
@@ -3575,16 +3616,17 @@ vector<vector<ContigBase> > loadContigs(string id)
                 exit(-1);
         }
 
-        return initContigs;
+        return contigs;
 }
 
-void loadReadsAlignment(vector<vector<ContigBase> > & contigs, string id)
+void loadReadAlignment(vector<vector<ContigBase> > & preContigs, string id)
 {
 	ifstream ra;
 	string buf, s;
 	unsigned int targetID1, targetStart1, targetEnd1, targetGap1, sourceID1, sourceStart1, sourceEnd1, sourceGap1, sourceSize1, fr1, targetID2, targetStart2, targetEnd2, targetGap2, sourceID2, sourceStart2, sourceEnd2, sourceGap2, sourceSize2, fr2;
 	int bp;
 	vector<Segment> segs1, segs2;
+	int line = 0;
 
 	s = "tmp/_reads_" + id + "_contigs.bowtie";
 	ra.open(s.c_str());
@@ -3600,16 +3642,20 @@ void loadReadsAlignment(vector<vector<ContigBase> > & contigs, string id)
 			getline(ra, buf);
 			if(buf[0] == 0)
 			{
-				cout << "BROKEN BOWTIE FILE" << endl;
+				cout << "BROKEN BOWTIE FILE!" << endl;
 				exit(-1);
 			}
 			parseBOWTIE(buf, targetID2, targetStart2, targetEnd2, targetGap2, sourceID2, sourceStart2, sourceEnd2, sourceGap2, sourceSize2, segs2, fr2);
 
-			for(bp = targetStart1; bp < targetEnd1; bp ++)
-				contigs[targetID1][bp].coverage ++;
-			for(bp = targetStart2; bp < targetEnd2; bp ++)
-				contigs[targetID2][bp].coverage ++;
-			
+			if(targetID1 != -1 && targetID2 != -1)
+			{
+				for(bp = targetStart1; bp < targetEnd1; bp ++)
+					preContigs[targetID1][bp].coverage ++;
+				for(bp = targetStart2; bp < targetEnd2; bp ++)
+					preContigs[targetID2][bp].coverage ++;
+			}
+			segs1.clear();
+			segs2.clear();
 		}
 	}
 	else
@@ -3636,7 +3682,7 @@ int close(unsigned int y1, unsigned int x2, unsigned int threshold)
                 return 0;
 }
 
-vector<vector<ContigPosition> > loadContigsAlignment(vector<vector<ContigBase> > contigs, string id)
+vector<vector<ContigPosition> > loadContigAlignment(vector<vector<ContigBase> > contigs, string id)
 {
         ifstream ca;
         vector<vector<ContigPosition> > positions;
@@ -3780,7 +3826,7 @@ vector<vector<ContigPosition> > loadContigsAlignment(vector<vector<ContigBase> >
         return positions;
 }
 
-void removeMasb(string file, vector<vector<ContigBase> > & contigs, vector<vector<ContigPosition> > positions, string id)
+void removeMasb(string file, vector<vector<ContigBase> > & contigs, vector<vector<ContigPosition> > positions, string id, int coverage)
 {
 	int sp, cp, pp, bp, bpp, start, end, total, part, p, i;
 	ifstream cf;
@@ -3829,7 +3875,7 @@ void removeMasb(string file, vector<vector<ContigBase> > & contigs, vector<vecto
 					end = bp;
 					total = total + contigs[cp][bp].coverage;
 
-					if(total / (end - start + 1) < 3)
+					if(total / (end - start + 1) < coverage)
 					{
 						for(bpp = start; bpp <= end; bpp ++)
 							contigs[cp][bpp].coverage = -2;// removed
@@ -3861,7 +3907,7 @@ cont:;
 				if(contigs[cp][bp].coverage == -1)
 					splitContigs[splitContigs.size() - 1].push_back(contigs[cp][bp].base);
 				if(bp == contigs[cp].size() - 1 || contigs[cp][bp].coverage == -1 && contigs[cp][bp + 1].coverage == -2)
-					if(splitContigs[splitContigs.size() - 1].size() <= 200)
+					if(splitContigs.size() > 0 && splitContigs[splitContigs.size() - 1].size() <= 200)
 						splitContigs.pop_back();
 			}
 
@@ -3904,21 +3950,22 @@ cont:;
 	}
 }
 
-void removeMisassembly(string file, int distanceLow, int distanceHigh, string id)
+void removeMisassembly(string file, int distanceLow, int distanceHigh, string id, int coverage)
 {
 	ifstream c;
 	string s;
-	vector<vector<ContigBase> > contigs;
+	vector<vector<ContigBase> > preContigs, contigs;
 	vector<vector<ContigPosition> > positions;
 
 	c.open(file.c_str());
 	s = "tmp/_" + id + "_contigs.fa";
 	formalizeInput(c, s.c_str());
 	makeAlignment(distanceLow, distanceHigh, id);
-	contigs = loadContigs(id);
-	loadReadsAlignment(contigs, id);
-	positions = loadContigsAlignment(contigs, id);
-	removeMasb(file, contigs, positions, id);
+	preContigs = loadPreContigs(id);
+	loadReadAlignment(preContigs, id);
+	contigs = loadContigs(id, preContigs);
+	positions = loadContigAlignment(contigs, id);
+	removeMasb(file, contigs, positions, id, coverage);
 }
 
 void print()
@@ -3963,6 +4010,18 @@ int main(int argc, char * argv[])
 //	r.open("remaining_contigs.fa");
 //	refinement(e, r, 1, 0, numChromosomes);
 //	return 1;
+
+//	g.open(argv[8]);
+//	formalizeGenome(g, 1);
+//	ext = argv[10];
+///	rmn = argv[12];
+//	distanceLow = atoi(argv[14]);
+//	distanceHigh = atoi(argv[16]);
+//	coverage = atoi(argv[20]);
+//      removeMisassembly(ext, distanceLow, distanceHigh, "extended", coverage);
+///     removeMisassembly(rmn, distanceLow, distanceHigh, "remaining");
+//      cout << endl << "(6) misassemblies removed" << endl;
+//      return 1;
 
 	cout << "AlignGraph: algorithm for secondary de novo genome assembly guided by closely related references" << endl;
 	cout << "By Ergude Bao, CS Department, UC-Riverside. All Rights Reserved" << endl << endl;
@@ -4300,8 +4359,8 @@ int main(int argc, char * argv[])
 
 	if(tagMisassemblyRemoval == 1)
 	{
-		removeMisassembly(ext, distanceLow, distanceHigh, "extended");
-		removeMisassembly(rmn, distanceLow, distanceHigh, "remaining");
+		removeMisassembly(ext, distanceLow, distanceHigh, "extended", coverage);
+		removeMisassembly(rmn, distanceLow, distanceHigh, "remaining", coverage);
 		cout << endl << "(6) misassemblies removed" << endl;
 	}
 
