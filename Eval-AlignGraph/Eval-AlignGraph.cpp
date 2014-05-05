@@ -502,7 +502,7 @@ void formalizeContigs(char argv[])
 					for(j = 0; j < contigs[i].size(); j ++)
 					{
 						contigsBuf[contigsBuf.size() - 1].push_back(contigs[i][j]);
-						if((j + 1) % SIZE == 0) contigsBuf.push_back(c);
+						if((j + 1) % SIZE == 0 && j < contigs[i].size() - 1) contigsBuf.push_back(c);
 					}
 					
 					for(j = 0; j < contigsBuf.size(); j ++)
