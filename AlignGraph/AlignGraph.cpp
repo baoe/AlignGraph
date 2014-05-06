@@ -3520,7 +3520,7 @@ void checkRatio(int numChromosomes)
 		cout << endl;
 }
 
-void makeAlignment(int distanceLow, int distanceHigh, string id)
+void makeAlignment(int distanceLow, int distanceHigh, string id, int fastMap)
 {
 	string command;
 
@@ -3528,7 +3528,10 @@ void makeAlignment(int distanceLow, int distanceHigh, string id)
 	system(command.c_str());
 	command = "bowtie2 -f --no-mixed -k 1 -p 8 -I " + itoa(distanceLow) + " -X " + itoa(distanceHigh) + " --no-discordant -x tmp/_" + id + "_contigs -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_" + id + "_contigs.bowtie 2>> bowtie_doc.txt";
 	system(command.c_str());
-	command = "blat tmp/_genome.fa tmp/_" + id + "_contigs.fa -noHead tmp/_" + id  + "_contigs_genome.psl >> blat_doc.txt";
+	if(fastMap == 0)
+		command = "blat tmp/_genome.fa tmp/_" + id + "_contigs.fa -noHead tmp/_" + id  + "_contigs_genome.psl >> blat_doc.txt";
+	else
+		command = "blat tmp/_genome.fa tmp/_" + id + "_contigs.fa -noHead tmp/_" + id  + "_contigs_genome.psl -fastMap >> blat_doc.txt";
 	system(command.c_str());
 }
 
@@ -3857,7 +3860,7 @@ void removeMasb(string file, vector<vector<ContigBase> > & contigs, vector<vecto
 			{
 				if(bp != 0 && bp != contigs[cp].size() - 1 && contigs[cp][bp - 1].coverage == -1 && contigs[cp][bp + 1].coverage == -1)
 				{
-					if(contigs[cp][bp].coverage < 3)
+					if(contigs[cp][bp].coverage < coverage)
 						contigs[cp][bp].coverage = -2;// removed
 					else
 						contigs[cp][bp].coverage = -1;
@@ -3890,6 +3893,16 @@ void removeMasb(string file, vector<vector<ContigBase> > & contigs, vector<vecto
 					total = total + contigs[cp][bp].coverage;
 			}
 		}
+//		for(bp = 0; bp < contigs[cp].size(); bp ++)
+//		{
+//			if(contigs[cp][bp].coverage == -1) break;
+//			contigs[cp][bp].coverage = -1;
+//		}// do not remove head
+//		for(bp = contigs[cp].size() - 1; bp >= 0; bp --)
+//		{
+//			if(contigs[cp][bp].coverage == -1) break;
+//			contigs[cp][bp].coverage = -1;
+//		}// do not remove tail
 cont:;
 	}
 
@@ -3950,7 +3963,7 @@ cont:;
 	}
 }
 
-void removeMisassembly(string file, int distanceLow, int distanceHigh, string id, int coverage)
+void removeMisassembly(string file, int distanceLow, int distanceHigh, string id, int coverage, int fastMap)
 {
 	ifstream c;
 	string s;
@@ -3960,7 +3973,7 @@ void removeMisassembly(string file, int distanceLow, int distanceHigh, string id
 	c.open(file.c_str());
 	s = "tmp/_" + id + "_contigs.fa";
 	formalizeInput(c, s.c_str());
-	makeAlignment(distanceLow, distanceHigh, id);
+	makeAlignment(distanceLow, distanceHigh, id, fastMap);
 	preContigs = loadPreContigs(id);
 	loadReadAlignment(preContigs, id);
 	contigs = loadContigs(id, preContigs);
@@ -4018,7 +4031,7 @@ int main(int argc, char * argv[])
 //	distanceLow = atoi(argv[14]);
 //	distanceHigh = atoi(argv[16]);
 //	coverage = atoi(argv[20]);
-//      removeMisassembly(ext, distanceLow, distanceHigh, "extended", coverage);
+//      removeMisassembly(ext, distanceLow, distanceHigh, "extended", coverage, 1);
 ///     removeMisassembly(rmn, distanceLow, distanceHigh, "remaining");
 //      cout << endl << "(6) misassemblies removed" << endl;
 //      return 1;
@@ -4359,8 +4372,8 @@ int main(int argc, char * argv[])
 
 	if(tagMisassemblyRemoval == 1)
 	{
-		removeMisassembly(ext, distanceLow, distanceHigh, "extended", coverage);
-		removeMisassembly(rmn, distanceLow, distanceHigh, "remaining", coverage);
+		removeMisassembly(ext, distanceLow, distanceHigh, "extended", coverage, tagFastMap);
+		removeMisassembly(rmn, distanceLow, distanceHigh, "remaining", coverage, tagFastMap);
 		cout << endl << "(6) misassemblies removed" << endl;
 	}
 
