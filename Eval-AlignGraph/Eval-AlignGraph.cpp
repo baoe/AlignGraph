@@ -296,8 +296,10 @@ vector<vector<pos> > loadContigsAlignment(int size)
 					if(positions[i][j].sourceEnd - positions[i][j].sourceStart > positions[i][k].sourceEnd - positions[i][k].sourceStart)
 						positions[i][k] = p0;
 					else
+					{
 						positions[i][j] = p0;
 						break;
+					}
 				}
 			}
 //remove duplicated alignments to different chrs
