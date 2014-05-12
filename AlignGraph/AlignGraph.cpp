@@ -3579,8 +3579,8 @@ vector<vector<ContigBase> > loadContigs(string id, vector<vector<ContigBase> > p
 {
         ifstream c;
         string buf, s;
-        int i, j, IDBak = -1;
-        char IDBuf[10];
+        int i, j, realIDBak = -1, seqID = -1;
+        char realIDBuf[10];
         vector<vector<ContigBase> > contigs;
 	vector<ContigBase> ic;
 	ContigBase cb;
@@ -3599,17 +3599,17 @@ vector<vector<ContigBase> > loadContigs(string id, vector<vector<ContigBase> > p
 				for(i = 1; i < buf.size() && buf[i] != '.'; i ++);
 				i ++;
 				for(j = 0; i < buf.size(); i ++, j ++)
-					IDBuf[j] = buf[i];
-				for(; j < 10; j ++) IDBuf[j] = '\0';
-
-                                if(atoi(IDBuf) > IDBak)
+					realIDBuf[j] = buf[i];
+				for(; j < 10; j ++) realIDBuf[j] = '\0';
+                                if(atoi(realIDBuf) > realIDBak)
                                 {
                                         contigs.push_back(ic);
-                                        IDBak = atoi(IDBuf);
+                                        realIDBak = atoi(realIDBuf);
                                 }
                                 
-				for(i = 0; i < preContigs[IDBak].size(); i ++)
-					contigs[contigs.size() - 1].push_back(preContigs[IDBak][i]);
+				seqID ++;
+				for(i = 0; i < preContigs[seqID].size(); i ++)
+					contigs[contigs.size() - 1].push_back(preContigs[seqID][i]);
 			}
                 }
         }
