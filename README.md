@@ -46,7 +46,7 @@ AlignGraph: algorithm for secondary de novo genome assembly guided by closely re
    --read2 is the the second pair of PE DNA reads in fasta format.  
    --contig is the initial contigs/scaffolds in fasta format.  
    --genome is the reference genome in fasta format.  
-   --distanceLow is the lower bound of alignment distance between the first and second pairs of PE DNA reads (recommended: insert length - 1000).  
+   --distanceLow is the lower bound of alignment distance between the first and second pairs of PE DNA reads (recommended: max{insert length - 1000, single read length}).  
    --distanceHigh is the upper bound of alignment distance between the first and second pairs of PE DNA reads (recommended: insert length + 1000).  
    Outputs:  
    --extendedContig is the extended contig/scaffold file in fasta format.  
@@ -65,6 +65,13 @@ AlignGraph: algorithm for secondary de novo genome assembly guided by closely re
 5. Outputs
    * Extended contigs or scaffolds in FASTA format. The format of the specification for each extended contig or scaffold (the string following the '>' of FASTA file) is: `AlignGraphX @ chromosomeID : contig/scaffoldID ; contig/scaffoldID ; contig/scaffoldID ... : partY`, where chromosomeID is the specification of the reference chromosome used to generate the extended contig or scaffold, X is a number starting from 0 to identify the extended contig or scaffold for each reference chromosome, and contig/scaffoldIDs are the specifications of the extendable contigs or scaffolds. If misassemblyRemoval is specified, partY shows the Y-th subcontig or subscaffold of the misassembled contig or scaffold split at misassemblies.
    * Remaining contigs or scaffolds not extended in FASTA format.
+
+6. Example commandline
+   Given PE reads files reads_1.fa and reads_2.fa with single read length 100 bp and insert length 500 bp, --distanceLow could be max{500 - 1000, 100} = 100 and --distanceHigh could be 500 + 1000 = 1500, so the simplest commandline with pre-assembled contigs file contigs.fa and reference genome genome.fa should be:
+
+  ```
+  AlignGraph --read1 reads_1.fa --read2 reads_2.fa --contig contigs.fa --genome genome.fa --distanceLow 100 --distanceHigh 1500 --extendedContig extendedContigs.fa --remainingContig remainingContigs.fa
+  ```
 
 <a name="eval"/>
 ### Eval-AlignGraph
