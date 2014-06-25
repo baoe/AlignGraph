@@ -67,6 +67,7 @@ AlignGraph: algorithm for secondary de novo genome assembly guided by closely re
    * Remaining contigs or scaffolds not extended in FASTA format.
 
 6. Example commandline
+
    Given PE reads files reads_1.fa and reads_2.fa with single read length 100 bp and insert length 500 bp, --distanceLow could be max{500 - 1000, 100} = 100 and --distanceHigh could be 500 + 1000 = 1500, so the simplest commandline with pre-assembled contigs file contigs.fa and reference genome genome.fa should be:
 
   ```
