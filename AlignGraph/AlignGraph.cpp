@@ -3182,12 +3182,12 @@ int formalizeGenome(ifstream & in, int p)
 	return chromosomeID;
 }
 
-int formalizeInput(ifstream & in1, ifstream & in2, string file)
+int formalizeInput(ifstream & in1, ifstream & in2, string file, string file1, string file2)
 {
         string buf1, buf2;
-        int i;
+        int i, size;
         unsigned long seqID = 0;
-        ofstream out;
+        ofstream out, out1, out2;
 	vector<char> read1, read2;
 
 	in1.clear();
@@ -3195,6 +3195,8 @@ int formalizeInput(ifstream & in1, ifstream & in2, string file)
 	in1.seekg(0);
 	in2.seekg(0);
         out.open(file.c_str());
+	out1.open(file1.c_str());
+	out2.open(file2.c_str());
 
         if(in1.is_open() && in2.is_open())
         {
@@ -3214,14 +3216,24 @@ int formalizeInput(ifstream & in1, ifstream & in2, string file)
                         {
 				if(read1.size() != 0 && read2.size() != 0)
 				{
+					size = read1.size() < read2.size() ? read1.size() : read2.size();
 					out << ">" << seqID << endl;
-					for(i = 0; i < read1.size(); i ++)
+					for(i = 0; i < size; i ++)
 						out << read1[i];
 					out << endl;
-					out << ">" << seqID ++ << endl;
-					for(i = 0; i < read2.size(); i ++)
+					out1 << ">" << seqID << endl;
+					for(i = 0; i < size; i ++)
+						out1 << read1[i];
+					out1 << endl;
+
+					out << ">" << seqID << endl;
+					for(i = 0; i < size; i ++)
 						out << read2[i];
 					out << endl;
+					out2 << ">" << seqID ++ << endl;
+					for(i = 0; i < size; i ++)
+						out2 << read2[i];
+					out2 << endl;
 				}
 
 				read1.clear();
@@ -3240,17 +3252,27 @@ int formalizeInput(ifstream & in1, ifstream & in2, string file)
 				exit(-1);
 			}
 		}
-			if(read1.size() != 0 && read2.size() != 0)
-                        {
-                                out << ">" << seqID << endl;
-                                for(i = 0; i < read1.size(); i ++)
-                                        out << read1[i];
-                                out << endl;
-                                out << ">" << seqID ++ << endl;
-                                for(i = 0; i < read2.size(); i ++)
-                                        out << read2[i];
-                                out << endl;
-                        }
+		if(read1.size() != 0 && read2.size() != 0)
+                {
+			size = read1.size() < read2.size() ? read1.size() : read2.size();
+                        out << ">" << seqID << endl;
+                        for(i = 0; i < size; i ++)
+                                out << read1[i];
+                        out << endl;
+			out1 << ">" << seqID << endl;
+			for(i = 0; i < size; i ++)
+				out1 << read1[i];
+			out1 << endl;
+
+                        out << ">" << seqID << endl;
+                        for(i = 0; i < size; i ++)
+                                out << read2[i];
+                        out << endl;
+			out2 << ">" << seqID ++ << endl;
+			for(i = 0; i < size; i ++)
+				out2 << read2[i];
+			out2 << endl;
+                }
         }
         else
         {
@@ -3989,7 +4011,7 @@ void print()
 	cout << "--read2 is the the second pair of PE DNA reads in fasta format" << endl;
 	cout << "--contig is the initial contigs in fasta format" << endl;
 	cout << "--genome is the reference genome in fasta format" << endl;
-	cout << "--distanceLow is the lower bound of alignment distance between the first and second pairs of PE DNA reads (recommended: insert length - 1000)" << endl;
+	cout << "--distanceLow is the lower bound of alignment distance between the first and second pairs of PE DNA reads (recommended: max{insert length - 1000, single read length})" << endl;
 	cout << "--distanceHigh is the upper bound of alignment distance between the first and second pairs of PE DNA reads (recommended: insert length + 1000)" << endl;
 	cout << "Outputs:" << endl;
 	cout << "--extendedContig is the extended contig file in fasta format" << endl;
@@ -4328,9 +4350,9 @@ int main(int argc, char * argv[])
 
 	if(tagNoAlignment == 1)
 	{
-		formalizeInput(r1, r2, "tmp/_reads.fa");
-		formalizeInput(r1, "tmp/_reads_1.fa");
-		formalizeInput(r2, "tmp/_reads_2.fa");
+		formalizeInput(r1, r2, "tmp/_reads.fa", "tmp/_reads_1.fa", "tmp/_reads_2.fa");
+//		formalizeInput(r1, "tmp/_reads_1.fa");
+//		formalizeInput(r2, "tmp/_reads_2.fa");
 		formalizeInput(c, "tmp/_contigs.fa");
 		numChromosomes = formalizeGenome(g, part);
 		startAlign = time(NULL);
