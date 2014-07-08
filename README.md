@@ -4,6 +4,8 @@
 [How to cite AlignGraph?] (#cite)  
 [Short Manual] (#manual)  
 [Eval-AlignGraph] (#eval)
+[FAQs] (#faq)
+[Erratum] (#error)
 
 <a name="overview"/>
 ### Overview
@@ -91,3 +93,8 @@ Eval-AlignGraph is the evaluation tool distributed with AlignGraph to generate s
 3. How many threads are used for Bowtie2?
 
    8 threads are used. Currently users cannot make changes to this, since this is a moderate choice for either single CPU machines (overhead for parallelization would not be too large) or multiple CPU machines. Another reason is, the bottleneck for the runtime is usually from BLAT, no matter how many threads there are for Bowtie2.
+
+<a name="error"/>
+### Erratum
+   There is a small error in page i322. See [erratum](http://biocluster.ucr.edu/~ebao/erratum.pdf) for more details.
+
