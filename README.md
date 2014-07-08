@@ -3,9 +3,9 @@
 [Copy right] (#copyright)  
 [How to cite AlignGraph?] (#cite)  
 [Short Manual] (#manual)  
-[Eval-AlignGraph] (#eval)
-[FAQs] (#faq)
-[Erratum] (#error)
+[Eval-AlignGraph] (#eval)  
+[FAQs] (#faq)  
+[Erratum] (#error)  
 
 <a name="overview"/>
 ### Overview
