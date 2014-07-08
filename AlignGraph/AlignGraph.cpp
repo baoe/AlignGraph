@@ -21,7 +21,7 @@
 #include <time.h>
 using namespace std;
 
-//#define TEST
+#define TEST
 #define OPTIMIZATION
 
 #define MAX 99999
@@ -3208,7 +3208,7 @@ int formalizeInput(ifstream & in1, ifstream & in2, string file, string file1, st
                                 break;
 			else if(buf1[0] == 0 && buf2[0] != 0 || buf1[0] != 0 && buf2[0] == 0)
 			{
-				cout << "INVALID INPUT FILE!" << endl;
+				cout << "INCONSISTENT PE FILES!" << endl;
 				exit(-1);
 			}
 
@@ -3248,7 +3248,7 @@ int formalizeInput(ifstream & in1, ifstream & in2, string file, string file1, st
                         }
 			else
 			{
-				cout << "INVALID INPUT FILE!" << endl;
+				cout << "INCONSISTENT PE FILES!" << endl;
 				exit(-1);
 			}
 		}
