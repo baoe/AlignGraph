@@ -88,3 +88,6 @@ Eval-AlignGraph is the evaluation tool distributed with AlignGraph to generate s
 
    You can but it is not recommended, since good alignment cannot be guaranteed with the very short reads and the very large insert length.
 
+3. How many threads are used for Bowtie2?
+
+   8 threads are used. Currently users cannot make changes to this, since this is a moderate choice for either single CPU machines (overhead for parallelization would not be too large) or multiple CPU machines. Another reason is, the bottleneck for the runtime is usually from BLAT, no matter how many threads there are for Bowtie2.
