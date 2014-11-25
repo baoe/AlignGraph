@@ -84,7 +84,7 @@ Eval-AlignGraph is the evaluation tool distributed with AlignGraph to generate s
 ### FAQs
 1. How can I input multiple libraries with different insert lengths?
 
-   Suppose you have one library x1.fa/y1.fa with insert length I1, and another library x2.fa/y2.fa with insert length I2, then you can simply combine x1.fa and x2.fa into x.fa, combine x2.fa and y2.fa into y.fa, and then input x.fa and y.fa. When you specify --insertLow, let insert length be min{I1, I2}; for --insertHigh, let insert length be max{I1, I2}.
+   Suppose you have one library x1.fa/y1.fa with insert length I1, and another library x2.fa/y2.fa with insert length I2, then you can simply combine x1.fa and x2.fa into x.fa, combine y1.fa and y2.fa into y.fa, and then input x.fa and y.fa. When you specify --insertLow, let insert length be min{I1, I2}; for --insertHigh, let insert length be max{I1, I2}.
 
 2. Can I use mate pair libraries?
 
