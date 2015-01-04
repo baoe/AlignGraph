@@ -94,6 +94,9 @@ Eval-AlignGraph is the evaluation tool distributed with AlignGraph to generate s
 
    8 threads are used. Currently users cannot make changes to this, since this is a moderate choice for either single CPU machines (overhead for parallelization would not be too large) or multiple CPU machines. Another reason is, the bottleneck for the runtime is usually from BLAT, no matter how many threads there are for Bowtie2.
 
+4. Why is there rare or no extension made by AlignGraph?
+   How much extensions AlignGraph can make is mainly dependent on factors like how close the reference genome and the target genome are, and how well the pre-assembly worked. Therefore, it is possible there is rare or no extension, either because the reference genome is not so similar to the target genome, or because the upstream assemblies are already good enough for the current version of AlignGraph. We are currently working on improving AlignGraph's performance, so that more extensions can be made with a relatively different reference genome, but this may take some time. 
+
 <a name="error"/>
 ### Erratum
    There is a small error in page i322. See [erratum](http://biocluster.ucr.edu/~ebao/erratum.pdf) for more details.
