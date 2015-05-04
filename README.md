@@ -98,6 +98,10 @@ Eval-AlignGraph is the evaluation tool distributed with AlignGraph to generate s
 
    How much extensions AlignGraph can make is mainly dependent on factors like how close the reference genome and the target genome are, and how well the pre-assembly worked. Therefore, it is possible there is rare or no extension, either because the reference genome is not so similar to the target genome, or because the upstream assemblies are already good enough for the current version of AlignGraph. We are currently working on improving AlignGraph's performance, so that more extensions can be made with a relatively different reference genome, but this may take some time. 
 
+5. Why could not my run with AlighGraph finish after a long time?
+
+   This could be due to the runtime bottleneck of AlignGraph including the BLAT alignment from contigs to reference genome and the sequential processing after the alignment. For the first thing, a suggestion besides specifying the -fastMap option is to combine the reference sequences if the reference genome contains not the complete chromosomes but long contigs/scaffolds. Like FAQ 4 above, it may also take some more time to publish an accelerated version of AlignGraph. Here is a tip for you to estimate how much more time it may still need to finish: if there are outputs on screen like steps (1), (2), (3)..., it means AlignGraph is processing the reference chromosomes one by one and you will know the progress; if not, it means AlignGraph is still doing the alignment and you have to wait for more time.
+
 <a name="error"/>
 ### Erratum
    There is a small error in page i322. See [erratum](http://biocluster.ucr.edu/~ebao/erratum.pdf) for more details.
