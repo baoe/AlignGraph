@@ -96,7 +96,7 @@ Eval-AlignGraph is the evaluation tool distributed with AlignGraph to generate s
 
 4. Why is there rare or no extension made by AlignGraph?
 
-   How much extensions AlignGraph can make is mainly dependent on factors like how close the reference genome and the target genome are, and how well the pre-assembly worked. Therefore, it is possible there is rare or no extension, either because the reference genome is not so similar to the target genome, or because the upstream assemblies are already good enough for the current version of AlignGraph. We are currently working on improving AlignGraph's performance, so that more extensions can be made with a relatively different reference genome, but this may take some time. 
+   How much extensions AlignGraph can make is mainly dependent on factors like how close the reference genome and the target genome are, and how well the pre-assembly worked. Therefore, it is possible there is rare or no extension, either because the reference genome is not so similar to the target genome, or because the upstream assemblies are already good enough for the current version of AlignGraph. We are currently working on improving AlignGraph's performance, so that more extensions can be made with a relatively different reference genome, but this may take some time. Besides these, you may want to check the bowtie_doc.txt and blat_doc.txt files to make sure Bowtie2 and BLAT were properly called by AlignGraph. 
 
 5. Why could not my run with AlighGraph finish after a long time?
 
