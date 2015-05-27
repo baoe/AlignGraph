@@ -62,7 +62,7 @@ Bao E, Jiang T, Girke T (2014) AlignGraph: algorithm for secondary de novo genom
    --ratioCheck checks read alignment ratio to the reference beforehand and warns if the ratio is too low; may take a little more time (default: none).  
    --iterativeMap aligns reads to one chromosome and then another rather than directly to the genome, which increases sensitivity while loses precision (default: none).  
    --misassemblyRemoval detects and then breaks at or removes misassembed regions (default: none).  
-   --resume resumes the previous unfinished running from several checkpoints (default: none). 
+   --resume resumes the previous unfinished running from several checkpoints (default: none).  
 
 5. Outputs
    * Extended contigs or scaffolds in FASTA format. The format of the specification for each extended contig or scaffold (the string following the '>' of FASTA file) is: `AlignGraphX @ chromosomeID : contig/scaffoldID ; contig/scaffoldID ; contig/scaffoldID ... : partY`, where chromosomeID is the specification of the reference chromosome used to generate the extended contig or scaffold, X is a number starting from 0 to identify the extended contig or scaffold for each reference chromosome, and contig/scaffoldIDs are the specifications of the extendable contigs or scaffolds. If misassemblyRemoval is specified, partY shows the Y-th subcontig or subscaffold of the misassembled contig or scaffold split at misassemblies.
