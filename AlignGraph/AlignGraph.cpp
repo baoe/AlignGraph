@@ -4386,7 +4386,7 @@ void getCheckpoint(ifstream & rcp, int & cp)
         }
 }
 
-int main(int argc, char * argv[])  
+int main(int argc, char * argv[])   
 {
 	ifstream r1, r2, c, g, rcmd, rcp;
 	ofstream e, r, wcmd, wcp;
