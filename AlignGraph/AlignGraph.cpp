@@ -4003,38 +4003,395 @@ void removeMisassembly(string file, int distanceLow, int distanceHigh, string id
 	removeMasb(file, contigs, positions, id, coverage);
 }
 
+void setCommand(ofstream & wcmd, string cmd)
+{
+	wcmd << cmd << endl;
+}
+
 void print()
 {
-	cout << "AlignGraph --read1 reads_1.fa --read2 reads_2.fa --contig contigs.fa --genome genome.fa --distanceLow distanceLow --distanceHigh distancehigh --extendedContig extendedContigs.fa --remainingContig remainingContigs.fa [--kMer k --insertVariation insertVariation --covereage coverage --noAlignment --part p --ratioCheck --iterativeMap --misassemblyRemoval]" << endl;
-	cout << "Inputs:" << endl;
-	cout << "--read1 is the the first pair of PE DNA reads in fasta format" << endl;
-	cout << "--read2 is the the second pair of PE DNA reads in fasta format" << endl;
-	cout << "--contig is the initial contigs in fasta format" << endl;
-	cout << "--genome is the reference genome in fasta format" << endl;
-	cout << "--distanceLow is the lower bound of alignment distance between the first and second pairs of PE DNA reads (recommended: max{insert length - 1000, single read length})" << endl;
-	cout << "--distanceHigh is the upper bound of alignment distance between the first and second pairs of PE DNA reads (recommended: insert length + 1000)" << endl;
-	cout << "Outputs:" << endl;
-	cout << "--extendedContig is the extended contig file in fasta format" << endl;
-	cout << "--remainingContig is the not extended initial contig file in fasta format" << endl;
-	cout << "Options:" << endl;
-	cout << "--kMer is the k-mer size (default: 5)" << endl;
-	cout << "--insertVariation is the small variation of insert length (default: 50)" << endl;
-	cout << "--coverage is the minimum coverage to keep a path in de Bruijn graph (default: 20)" << endl;
-	cout << "--noAlignment skips the initial time-consuming alignment step, if all the alignment files have been provided in tmp directory (default: none)" << endl;
-	cout << "--part is the number of parts a chromosome is divided into when it is loaded to reduce memory requirement (default: 1)" << endl;
-	cout << "--fastMap makes BLAT alignment faster to avoid super long time waiting on some data but may lower a little sensitivity of AlignGraph (default: none)" << endl;
-	cout << "--ratioCheck checks read alignment ratio to the reference beforehand and warns if the ratio is too low; may take a little more time (default: none)" << endl;
-	cout << "--iterativeMap aligns reads to one chromosome and then another rather than directly to the genome, which increases sensitivity while loses precision (default: none)" << endl;
-	cout << "--misassemblyRemoval detects and then breaks at or removes misassembed regions (default: none)" << endl;
+        cout << "AlignGraph --read1 reads_1.fa --read2 reads_2.fa --contig contigs.fa --genome genome.fa --distanceLow distanceLow --distanceHigh distancehigh --extendedContig extendedContigs.fa --remainingContig remainingContigs.fa [--kMer k --insertVariation insertVariation --covereage coverage --part p --ratioCheck --iterativeMap --misassemblyRemoval --resume]" << endl;
+        cout << "Inputs:" << endl;
+        cout << "--read1 is the the first pair of PE DNA reads in fasta format" << endl;
+        cout << "--read2 is the the second pair of PE DNA reads in fasta format" << endl;
+        cout << "--contig is the initial contigs in fasta format" << endl;
+        cout << "--genome is the reference genome in fasta format" << endl;
+        cout << "--distanceLow is the lower bound of alignment distance between the first and second pairs of PE DNA reads (recommended: max{insert length - 1000, single read length})" << endl;
+        cout << "--distanceHigh is the upper bound of alignment distance between the first and second pairs of PE DNA reads (recommended: insert length + 1000)" << endl;
+        cout << "Outputs:" << endl;
+        cout << "--extendedContig is the extended contig file in fasta format" << endl;
+        cout << "--remainingContig is the not extended initial contig file in fasta format" << endl;
+        cout << "Options:" << endl;
+        cout << "--kMer is the k-mer size (default: 5)" << endl;
+        cout << "--insertVariation is the small variation of insert length (default: 50)" << endl;
+        cout << "--coverage is the minimum coverage to keep a path in de Bruijn graph (default: 20)" << endl;
+        cout << "--part is the number of parts a chromosome is divided into when it is loaded to reduce memory requirement (default: 1)" << endl;
+        cout << "--fastMap makes BLAT alignment faster to avoid super long time waiting on some data but may lower a little sensitivity of AlignGraph (default: none)" << endl;
+        cout << "--ratioCheck checks read alignment ratio to the reference beforehand and warns if the ratio is too low; may take a little more time (default: none)" << endl;
+        cout << "--iterativeMap aligns reads to one chromosome and then another rather than directly to the genome, which increases sensitivity while loses precision (default: none)" << endl;
+        cout << "--misassemblyRemoval detects and then breaks at or removes misassembed regions (default: none)" << endl;
+        cout << "--resume resumes the previous unfinished running from several checkpoints (default: none)" << endl;
+}
+
+void getParameters(ifstream & rcmd, ifstream & r1, ifstream & r2, ifstream & c, ifstream & g, ofstream & e, ofstream & r, int & distanceLow, int & distanceHigh, int & k, int & insertVariation, int & coverage, int & part, int & tagRead1, int & tagRead2, int & tagContig, int & tagGenome, int & tagDistanceLow, int & tagDistanceHigh, int & tagExtendedContig, int & tagRemainingContig, int & tagKMer, int & tagInsertVariation, int & tagCoverage, int & tagPart, int & tagFastMap, int & tagRatioCheck, int & tagUniqueExtension, int & tagIterativeMap, int & tagMisassemblyRemoval, int & tagResume, string & ext, string & rmn)
+{
+	int i = -1, count = 0;
+	string buf, bufCheck1;
+	stringstream bufCheck2;
+
+	if(rcmd.is_open())
+	{
+		while(rcmd.good())
+		{
+			getline(rcmd, buf);
+			if(buf[0] == 0) break;
+
+			count ++;
+		}
+	}
+	else
+	{
+		cout << "CANNOT OPEN FILE!" << endl;
+		exit(-1);
+	}
+
+	rcmd.clear();
+	rcmd.seekg(0);
+
+	if(rcmd.is_open())
+	{
+		while(rcmd.good())
+		{
+			getline(rcmd, buf);
+			if(buf[0] == 0) break;
+
+			i ++;
+	                if(buf == "--read1")
+	                {
+	                        if(tagRead1 == 1 || i == count - 1)
+	                        {
+	                                print();
+	                                exit(-1);
+	                        }
+				getline(rcmd, buf);
+	                        r1.open(buf.c_str());
+	                        if(!r1.is_open())
+	                        {
+	                                cout << "CANNOT OPEN FILE!" << endl;
+	                                print();
+	                                exit(-1);
+	                        }
+	                        tagRead1 = 1;
+	                }
+	                else if(buf == "--read2")
+	                {
+	                        if(tagRead2 == 1 || i == count - 1)
+	                        {
+	                                print();
+	                                exit(-1);
+	                        }
+				getline(rcmd, buf);
+	                        r2.open(buf.c_str());
+	                        if(!r2.is_open())
+	                        {
+	                                cout << "CANNOT OPEN FILE!" << endl;
+	                                print();
+	                                exit(-1);
+	                        }
+	                        tagRead2 = 1;
+	                }
+	                else if(buf == "--contig")
+	                {
+	                        if(tagContig == 1 || i == count - 1)
+	                        {
+	                                print();
+	                                exit(-1);
+	                        }
+				getline(rcmd, buf);
+	                        c.open(buf.c_str());
+	                        if(!c.is_open())
+	                        {
+	                                cout << "CANNOT OPEN FILE!" << endl;
+	                                print();
+	                                exit(-1);
+	                        }
+	                        tagContig = 1;
+	                }
+	                else if(buf == "--genome")
+	                {
+	                        if(tagGenome == 1 || i == count - 1)
+	                        {
+	                                print();
+	                                exit(-1);
+	                        }
+				getline(rcmd, buf);
+	                        g.open(buf.c_str());
+	                        if(!g.is_open())
+	                        {
+	                                cout << "CANNOT OPEN FILE!" << endl;
+	                                print();
+	                                exit(-1);
+	                        }
+	                        tagGenome = 1;
+	                }
+	                else if(buf == "--distanceLow")
+	                {
+	                        if(tagDistanceLow == 1 || i == count - 1)
+	                        {
+	                                print();
+	                                exit(-1);
+	                        }
+				getline(rcmd, buf);
+	                        distanceLow = atoi(buf.c_str());
+	                        bufCheck2.str("");
+	                        bufCheck2 << distanceLow;
+	                        bufCheck1 = bufCheck2.str();
+	                        if(bufCheck1 != buf)
+	                        {
+	                                print();
+	                                exit(-1);
+	                        }
+	                        tagDistanceLow = 1;
+	                }
+	                else if(buf == "--distanceHigh")
+	                {
+	                        if(tagDistanceHigh == 1 || i == count - 1)
+	                        {
+	                                print();
+	                                exit(-1);
+	                        }
+				getline(rcmd, buf);
+	                        distanceHigh = atoi(buf.c_str());
+	                        bufCheck2.str("");
+	                        bufCheck2 << distanceHigh;
+	                        bufCheck1 = bufCheck2.str();
+	                        if(bufCheck1 != buf)
+	                        {
+	                                print();
+	                                exit(-1);
+	                        }
+	                        tagDistanceHigh = 1;
+	                }
+	                else if(buf == "--extendedContig")
+	                {
+	                        if(tagExtendedContig == 1 || i == count - 1)
+	                        {
+	                                print();
+	                                exit(-1);
+	                        }
+				getline(rcmd, buf);
+	                        e.open(buf.c_str());
+	                        ext = buf;
+	                        if(!e.is_open())
+	                        {
+	                                cout << "CANNOT OPEN FILE!" << endl;
+	                                print();
+	                                exit(-1);
+	                        }
+	                        tagExtendedContig = 1;
+	                }
+	                else if(buf == "--remainingContig")
+	                {
+	                        if(tagRemainingContig == 1 || i == count - 1)
+	                        {
+	                                print();
+	                                exit(-1);
+	                        }
+				getline(rcmd, buf);
+	                        r.open(buf.c_str());
+	                        rmn = buf;
+	                        if(!r.is_open())
+	                        {
+	                                cout << "CANNOT OPEN FILE!" << endl;
+	                                print();
+	                                exit(-1);
+	                        }
+	                        tagRemainingContig = 1;
+	                }
+	                else if(buf == "--kMer")
+	                {
+	                        if(tagKMer == 1 || i == count - 1)
+	                        {
+	                                print();
+	                                exit(-1);
+	                        }
+				getline(rcmd, buf);
+	                        k = atoi(buf.c_str());
+	                        bufCheck2.str("");
+	                        bufCheck2 << k;
+	                        bufCheck1 = bufCheck2.str();
+	                        if(bufCheck1 != buf)
+	                        {
+	                                print();
+	                                exit(-1);
+	                        }
+	                        tagKMer = 1;
+	                }
+	                else if(buf == "--insertVariation")
+	                {
+	                        if(tagInsertVariation == 1 || i == count - 1)
+	                        {
+	                                print();
+	                                exit(-1);
+	                        }
+				getline(rcmd, buf);
+	                        insertVariation = atoi(buf.c_str());
+	                        bufCheck2.str("");
+	                        bufCheck2 << insertVariation;
+	                        bufCheck1 = bufCheck2.str();
+	                        if(bufCheck1 != buf)
+	                        {
+	                                print();
+	                                exit(-1);
+	                        }
+	                        tagInsertVariation = 1;
+	                }
+	                else if(buf == "--coverage")
+	                {
+	                        if(tagCoverage == 1 || i == count - 1)
+	                        {
+	                                print();
+	                                exit(-1);
+	                        }
+				getline(rcmd, buf);
+	                        coverage = atoi(buf.c_str());
+	                        bufCheck2.str("");
+	                        bufCheck2 << coverage;
+	                        bufCheck1 = bufCheck2.str();
+	                        if(bufCheck1 != buf)
+	                        {
+	                                print();
+	                                exit(-1);
+	                        }
+	                        tagCoverage = 1;
+	                }
+	                else if(buf == "--part")
+	                {
+	                        if(tagPart == 1 || i == count - 1)
+	                        {
+	                                print();
+	                                exit(-1);
+	                        }
+				getline(rcmd, buf);
+	                        part = atoi(buf.c_str());
+	                        bufCheck2.str("");
+	                        bufCheck2 << part;
+	                        bufCheck1 = bufCheck2.str();
+	                        if(bufCheck1 != buf)
+	                        {
+	                                print();
+	                                exit(-1);
+	                        }
+	                        tagPart = 1;
+	                }
+	                else if(buf == "--fastMap")
+	                {
+	                        if(tagFastMap == 1)
+	                        {
+	                                print();
+	                                exit(-1);
+	                        }
+	                        tagFastMap = 1;
+	                }
+	                else if(buf == "--ratioCheck")
+	                {
+	                        if(tagRatioCheck == 1)
+	                        {
+	                                print();
+	                                exit(-1);
+	                        }
+	                        tagRatioCheck = 1;
+	                }
+	                else if(buf == "--uniqueExtension")
+	                {
+	                        if(tagUniqueExtension == 1)
+	                        {
+	                                print();
+	                                exit(-1);
+	                        }
+	                        tagUniqueExtension = 1;
+	                }
+	                else if(buf == "--iterativeMap")
+	                {
+	                        if(tagIterativeMap == 1)
+	                        {
+	                                print();
+	                                exit(-1);
+	                        }
+	                        tagIterativeMap = 1;
+	                }
+	                else if(buf == "--misassemblyRemoval")
+	                {
+	                        if(tagMisassemblyRemoval == 1)
+	                        {
+	                                print();
+	                                exit(-1);
+	                        }
+	                        tagMisassemblyRemoval = 1;
+	                }
+	                else if(buf == "--resume")
+	                {
+	                        if(tagResume == 1 || count != 1)
+	                        {
+	                                print();
+	                                exit(-1);
+	                        }
+	                        tagResume = 1;
+	                }
+	                else
+	                {
+	                        print();
+	                        exit(-1);
+	                }
+		}
+	}
+	else
+	{
+		cout << "CANNOT OPEN CHECKPOINT FILE!" << endl;
+		exit(-1);
+	}
+}
+
+void setCheckpoint(ofstream & wcp, string s)
+{
+	wcp << s << endl;
+}
+
+void getCheckpoint(ifstream & rcp, int & cp)
+{
+        int i;
+        string s;
+
+        cp = -1;
+        if(rcp.is_open())
+        {
+                while(rcp.good())
+                {
+                        getline(rcp, s);
+                        if(s[0] == 0) break;
+
+                        cp = atoi(s.c_str());
+                }
+        }
+        else
+        {
+                cout << "CANNOT OPEN FILE!" << endl;
+                exit(-1);
+        }
+
+        if(cp == -1)
+        {
+                cout << "NOT REACHED CHECKPOINT. PLEASE RERUN!" << endl;
+                exit(-1);
+        }
 }
 
 int main(int argc, char * argv[])
 {
-	ifstream r1, r2, c, g;
-	ofstream e, r;
-	string s, sCheck, ext, rmn;
-	stringstream ssCheck;
-	int i, tagRead1 = 0, tagRead2 = 0, tagContig = 0, tagGenome = 0, tagExtendedContig = 0, tagKMer = 0, tagDistanceLow = 0, tagDistanceHigh = 0, tagNoAlignment = 1, k = 5, distanceLow = 0, distanceHigh = MAX, chromosomeID, numChromosomes, coverage = 20, tagCoverage = 0, mrl, mrl1, mrl2, tagInsertVariation = 0, insertVariation = 50, tagRemainingContig = 0, part = 1, tagPart = 0, tagFastMap = 0, numReads, tagRatioCheck = 0, tagUniqueExtension = 0, tagIterativeMap = 0, tagMisassemblyRemoval = 0;
+	ifstream r1, r2, c, g, rcmd, rcp;
+	ofstream e, r, wcmd, wcp;
+	string ext, rmn;
+	int i, tagRead1 = 0, tagRead2 = 0, tagContig = 0, tagGenome = 0, tagExtendedContig = 0, tagKMer = 0, tagDistanceLow = 0, tagDistanceHigh = 0, tagNoAlignment = 1, k = 5, distanceLow = 0, distanceHigh = MAX, chromosomeID, numChromosomes, coverage = 20, tagCoverage = 0, mrl, mrl1, mrl2, tagInsertVariation = 0, insertVariation = 50, tagRemainingContig = 0, part = 1, tagPart = 0, tagFastMap = 0, numReads, tagRatioCheck = 0, tagUniqueExtension = 0, tagIterativeMap = 0, tagMisassemblyRemoval = 0, tagResume = 0, cp = 0;
 	time_t start, end, startAlign, endAlign;
 
 //	g.open(argv[8]);
@@ -4062,332 +4419,80 @@ int main(int argc, char * argv[])
 	cout << "By Ergude Bao, CS Department, UC-Riverside. All Rights Reserved" << endl << endl;
 
 	start = time(NULL);
-	for(i = 1; i < argc; i ++)
+	wcmd.open("command.txt");
+	if(wcmd.is_open())
 	{
-		s = argv[i];
-                if(s == "--read1")
-                {
-                        if(tagRead1 == 1 || i == argc - 1)
-                        {
-                                print();
-                                return 0;
-                        }
-                        r1.open(argv[++ i]);
-                        if(!r1.is_open())
-                        {
-                                cout << "CANNOT OPEN FILE!" << endl;
-                                print();
-                                return 0;
-                        }
-			tagRead1 = 1;
-                }
-                else if(s == "--read2")
-                {
-                        if(tagRead2 == 1 || i == argc - 1)
-                        {
-                                print();
-                                return 0;
-                        }
-                        r2.open(argv[++ i]);
-                        if(!r2.is_open())
-                        {
-                                cout << "CANNOT OPEN FILE!" << endl;
-                                print();
-                                return 0;
-                        }
-                        tagRead2 = 1;
-                }
-                else if(s == "--contig")
-                {
-                        if(tagContig == 1 || i == argc - 1)
-                        {
-                                print();
-                                return 0;
-                        }
-                        c.open(argv[++ i]);
-                        if(!c.is_open())
-                        {
-                                cout << "CANNOT OPEN FILE!" << endl;
-                                print();
-                                return 0;
-                        }
-                        tagContig = 1;
-                }
-                else if(s == "--genome")
-                {
-                        if(tagGenome == 1 || i == argc - 1)
-                        {
-                                print();
-                                return 0;
-                        }
-                        g.open(argv[++ i]);
-                        if(!g.is_open())
-                        {
-                                cout << "CANNOT OPEN FILE!" << endl;
-                                print();
-                                return 0;
-                        }
-                        tagGenome = 1;
-                }
-                else if(s == "--distanceLow")
-                {
-                        if(tagDistanceLow == 1 || i == argc - 1)
-                        {
-                                print();
-                                return 0;
-                        }
-                        distanceLow = atoi(argv[++ i]);
-                        ssCheck.str("");
-                        ssCheck << distanceLow;
-                        sCheck = ssCheck.str();
-                        if(sCheck != argv[i])
-                        {
-                                print();
-                                return 0;
-                        }
-                        tagDistanceLow = 1;
-                }
-                else if(s == "--distanceHigh")
-                {
-                        if(tagDistanceHigh == 1 || i == argc - 1)
-                        {
-                                print();
-                                return 0;
-                        }
-                        distanceHigh = atoi(argv[++ i]);
-                        ssCheck.str("");
-                        ssCheck << distanceHigh;
-                        sCheck = ssCheck.str();
-                        if(sCheck != argv[i])
-                        {
-                                print();
-                                return 0;
-                        }
-                        tagDistanceHigh = 1;
-                }
-                else if(s == "--extendedContig")
-                {
-                        if(tagExtendedContig == 1 || i == argc - 1)
-                        {
-                                print();
-                                return 0;
-                        }
-			e.open(argv[++ i]);
-			ext = argv[i];
-                        if(!e.is_open())
-                        {
-                                cout << "CANNOT OPEN FILE!" << endl;
-                                print();
-                                return 0;
-                        }
-			tagExtendedContig = 1;
-                }
-                else if(s == "--remainingContig")
-                {
-                        if(tagRemainingContig == 1 || i == argc - 1)
-                        {
-                                print();
-                                return 0;
-                        }
-                        r.open(argv[++ i]);
-			rmn = argv[i];
-                        if(!r.is_open())
-                        {
-                                cout << "CANNOT OPEN FILE!" << endl;
-                                print();
-                                return 0;
-                        }
-                        tagRemainingContig = 1;
-                }
-                else if(s == "--kMer")
-                {
-                        if(tagKMer == 1 || i == argc - 1)
-                        {
-                                print();
-                                return 0;
-                        }
-			k = atoi(argv[++ i]);
-			ssCheck.str("");
-			ssCheck << k;
-			sCheck = ssCheck.str();
-			if(sCheck != argv[i])
-			{
-				print();
-				return 0;
-			}
-			tagKMer = 1;
-                }
-                else if(s == "--insertVariation")
-                {
-                        if(tagInsertVariation == 1 || i == argc - 1)
-                        {
-                                print();
-                                return 0;
-                        }
-                        insertVariation = atoi(argv[++ i]);
-                        ssCheck.str("");
-                        ssCheck << insertVariation;
-                        sCheck = ssCheck.str();
-                        if(sCheck != argv[i])
-                        {
-                                print();
-                                return 0;
-                        }
-                        tagInsertVariation = 1;
-                }
-                else if(s == "--coverage")
-                {
-                        if(tagCoverage == 1 || i == argc - 1)
-                        {
-                                print();
-                                return 0;
-                        }
-                        coverage = atoi(argv[++ i]);
-                        ssCheck.str("");
-                        ssCheck << coverage;
-                        sCheck = ssCheck.str();
-                        if(sCheck != argv[i])
-                        {
-                                print();
-                                return 0;
-                        }
-                        tagCoverage = 1;
-                }
-                else if(s == "--noAlignment")
-                {
-                        if(tagNoAlignment == 0)
-                        {
-                                print();
-                                return 0;
-                        }
-                        tagNoAlignment = 0;
-                }
-		else if(s == "--part")
-		{
-			if(tagPart == 1 || i == argc - 1)
-			{
-				print();
-				return 0;
-			}
-			part = atoi(argv[++ i]);
-			ssCheck.str("");
-			ssCheck << part;
-			sCheck = ssCheck.str();
-			if(sCheck != argv[i])
-			{
-				print();
-				return 0;
-			}
-			tagPart = 1;
-		}
-		else if(s == "--fastMap")
-		{
-			if(tagFastMap == 1)
-			{
-				print();
-				return 0;
-			}
-			tagFastMap = 1;
-		}
-		else if(s == "--ratioCheck")
-		{
-			if(tagRatioCheck == 1)
-			{
-				print();
-				return 0;
-			}
-			tagRatioCheck = 1;
-		}
-		else if(s == "--uniqueExtension")
-		{
-			if(tagUniqueExtension == 1)
-			{
-				print();
-				return 0;
-			}
-			tagUniqueExtension = 1;
-		}
-		else if(s == "--iterativeMap")
-                {
-                        if(tagIterativeMap == 1)
-                        {
-                                print();
-                                return 0;
-                        }
-                        tagIterativeMap = 1;
-                }
-		else if(s == "--misassemblyRemoval")
-		{
-			if(tagMisassemblyRemoval == 1)
-			{
-				print();
-				return 0;
-			}
-			tagMisassemblyRemoval = 1;
-		}
-		else
-		{
-			print();
-			return 0;
-		}
+		for(i = 1; i < argc; i ++)
+			setCommand(wcmd, argv[i]);
 	}
-
-	if(tagRead1 == 0 || tagRead2 == 0 || tagContig == 0 || tagGenome == 0 || tagExtendedContig == 0 || tagRemainingContig == 0 || k <= 0 || tagDistanceLow == 0 || tagDistanceHigh == 0 || distanceLow > distanceHigh || distanceLow < 0 || insertVariation < 0 || part < 1 || part > 10)// || k > mrl)
+	else
 	{
-		print();
+		cout << "CANNOT OPEN FILE!" << endl;
 		return 0;
 	}
-	mrl1 = maxReadLength(r1);
-	mrl2 = maxReadLength(r2);
-	mrl = mrl1 > mrl2 ? mrl1 : mrl2;
-	if(k > mrl)
-	{
-		print();
-		return 0;
-	}
+	wcmd.close();	
+	rcmd.open("command.txt");
+	getParameters(rcmd, r1, r2, c, g, e, r, distanceLow, distanceHigh, k, insertVariation, coverage, part, tagRead1, tagRead2, tagContig, tagGenome, tagDistanceLow, tagDistanceHigh, tagExtendedContig, tagRemainingContig, tagKMer, tagInsertVariation, tagCoverage, tagPart, tagFastMap, tagRatioCheck, tagUniqueExtension, tagIterativeMap, tagMisassemblyRemoval, tagResume, ext, rmn);
+	rcmd.close();
 
-	system("test -d \"tmp\"; t=$?; if [ $t -eq 1 ]; then mkdir tmp; fi");
-
-	if(tagNoAlignment == 1)
+	if(tagResume == 0)
 	{
+		if(tagRead1 == 0 || tagRead2 == 0 || tagContig == 0 || tagGenome == 0 || tagExtendedContig == 0 || tagRemainingContig == 0 || k <= 0 || tagDistanceLow == 0 || tagDistanceHigh == 0 || distanceLow > distanceHigh || distanceLow < 0 || insertVariation < 0 || part < 1 || part > 10 || k > maxReadLength(r1) || k > maxReadLength(r2))
+        	{
+                	print();
+                	return 0;
+        	}
+
+		system("test -d \"tmp\"; t=$?; if [ $t -eq 1 ]; then mkdir tmp; fi");
+		wcmd.open("tmp/_command.txt");
+		for(i = 1; i < argc; i ++)
+			setCommand(wcmd, argv[i]);
+		wcp.open("tmp/_checkpoint.txt");
+
 		formalizeInput(r1, r2, "tmp/_reads.fa", "tmp/_reads_1.fa", "tmp/_reads_2.fa");
-//		formalizeInput(r1, "tmp/_reads_1.fa");
-//		formalizeInput(r2, "tmp/_reads_2.fa");
 		formalizeInput(c, "tmp/_contigs.fa");
 		numChromosomes = formalizeGenome(g, part);
 		startAlign = time(NULL);
 		parallelMap(distanceLow, distanceHigh, numChromosomes, tagFastMap, tagIterativeMap);
 		endAlign = time(NULL);
 		cout << "(0) Alignment finished" << endl;
+		setCheckpoint(wcp, "0");		
 	}
 	else
 	{
+		rcp.open("tmp/_checkpoint.txt");
+		getCheckpoint(rcp, cp);
+		rcmd.open("tmp/_command.txt");
+		getParameters(rcmd, r1, r2, c, g, e, r, distanceLow, distanceHigh, k, insertVariation, coverage, part, tagRead1, tagRead2, tagContig, tagGenome, tagDistanceLow, tagDistanceHigh, tagExtendedContig, tagRemainingContig, tagKMer, tagInsertVariation, tagCoverage, tagPart, tagFastMap, tagRatioCheck, tagUniqueExtension, tagIterativeMap, tagMisassemblyRemoval, tagResume, ext, rmn);
+		cout << "RESUMED SUCCESSFULLY :-)" << endl;
+		wcp.open("tmp/_checkpoint.txt", ios::app);
+
 		formalizeInput(c, "tmp/_contigs.fa");
 		numChromosomes = formalizeGenome(g, part);
 		startAlign = endAlign = time(NULL);
-		cout << "(0) Alignment skipped" << endl;
 	}
 
 	if(tagRatioCheck == 1)
 		checkRatio(numChromosomes);
 
-	for(chromosomeID = 0; chromosomeID < numChromosomes; chromosomeID ++)
+	for(chromosomeID = cp; chromosomeID < numChromosomes; chromosomeID ++)
 	{
 		cout << endl << "CHROMOSOME " << chromosomeID << ": " << endl;
 		loadGenome(genome, chromosomeID);
-		cout << "(1) chromosome loaded" << endl;
+		cout << "(1) Chromosome loaded" << endl;
 		loadContigAlignment(genome, chromosomeID);
-		cout << "(2) contig alignment loaded" << endl;
+		cout << "(2) Contig alignment loaded" << endl;
 		loadReadAlignment(genome, k, insertVariation, chromosomeID, mrl);
-		cout << "(3) read alignment loaded" << endl;
+		cout << "(3) Read alignment loaded" << endl;
 		extendContigs(genome, coverage, k, chromosomeID);
-		cout << "(4) contigs extended" << endl;
+		cout << "(4) Contigs extended" << endl;
 		scaffoldContigs(genome, chromosomeID);
-		cout << "(5) contigs scaffolded" << endl;
+		cout << "(5) Contigs scaffolded" << endl;
 		system("ps euf >> mem.txt");
 		contigs.clear();
 		genome.clear();
 		sourceIDBak = -1;
+		setCheckpoint(wcp, itoa(chromosomeID + 1));
 	}
 
 	refinement(e, r, tagFastMap, tagUniqueExtension, numChromosomes);
@@ -4396,10 +4501,10 @@ int main(int argc, char * argv[])
 	{
 		removeMisassembly(ext, distanceLow, distanceHigh, "extended", coverage, tagFastMap);
 		removeMisassembly(rmn, distanceLow, distanceHigh, "remaining", coverage, tagFastMap);
-		cout << endl << "(6) misassemblies removed" << endl;
+		cout << endl << "(6) Misassemblies removed" << endl;
 	}
 
 	end = time(NULL);
-	cout << endl << "FINISHED for " <<  end - start << " seconds (" << endAlign - startAlign << " seconds for alignment) :-)" << endl;
+	cout << endl << "FINISHED SUCCESSFULLY for " <<  end - start << " seconds (" << endAlign - startAlign << " seconds for alignment) :-)" << endl;
 }
 

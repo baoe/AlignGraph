@@ -40,7 +40,7 @@ Bao E, Jiang T, Girke T (2014) AlignGraph: algorithm for secondary de novo genom
 4. Using AlignGraph
 
    ```
-   AlignGraph --read1 reads_1.fa --read2 reads_2.fa --contig contigs.fa --genome genome.fa --distanceLow distanceLow --distanceHigh distancehigh --extendedContig extendedContigs.fa --remainingContig remainingContigs.fa [--kMer k --insertVariation insertVariation --coverage coverage --noAlignment --part p --fastMap --ratioCheck --iterativeMap --misassemblyRemoval]
+   AlignGraph --read1 reads_1.fa --read2 reads_2.fa --contig contigs.fa --genome genome.fa --distanceLow distanceLow --distanceHigh distancehigh --extendedContig extendedContigs.fa --remainingContig remainingContigs.fa [--kMer k --insertVariation insertVariation --coverage coverage --part p --fastMap --ratioCheck --iterativeMap --misassemblyRemoval --resume]
    ```
 
    Inputs:  
@@ -57,12 +57,12 @@ Bao E, Jiang T, Girke T (2014) AlignGraph: algorithm for secondary de novo genom
    --kMer is the k-mer size (default: 5).  
    --insertVariation is the standard variation of insert length (default: 100).  
    --coverage is the minimum coverage to keep a path in de Bruijn graph (default: 20).  
-   --noAlignment skips the initial time-consuming alignment step, if all the alignment files have been provided in tmp directory (default: none).  
    --part is the number of parts a chromosome is divided into when it is loaded to reduce memory requirement (default: 1).  
    --fastMap makes BLAT alignment faster to avoid super long time waiting on some data but may lower a little sensitivity of AlignGraph (default: none).  
    --ratioCheck checks read alignment ratio to the reference beforehand and warns if the ratio is too low; may take a little more time (default: none).  
    --iterativeMap aligns reads to one chromosome and then another rather than directly to the genome, which increases sensitivity while loses precision (default: none).  
-   --misassemblyRemoval detects and then breaks at or removes misassembed regions (default: none).  
+   --misassemblyRemoval detects and then breaks at or removes misassembed regions (default: none). 
+   --resume resumes the previous unfinished running from several checkpoints (default: none). 
 
 5. Outputs
    * Extended contigs or scaffolds in FASTA format. The format of the specification for each extended contig or scaffold (the string following the '>' of FASTA file) is: `AlignGraphX @ chromosomeID : contig/scaffoldID ; contig/scaffoldID ; contig/scaffoldID ... : partY`, where chromosomeID is the specification of the reference chromosome used to generate the extended contig or scaffold, X is a number starting from 0 to identify the extended contig or scaffold for each reference chromosome, and contig/scaffoldIDs are the specifications of the extendable contigs or scaffolds. If misassemblyRemoval is specified, partY shows the Y-th subcontig or subscaffold of the misassembled contig or scaffold split at misassemblies.
