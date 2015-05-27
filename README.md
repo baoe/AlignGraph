@@ -61,7 +61,7 @@ Bao E, Jiang T, Girke T (2014) AlignGraph: algorithm for secondary de novo genom
    --fastMap makes BLAT alignment faster to avoid super long time waiting on some data but may lower a little sensitivity of AlignGraph (default: none).  
    --ratioCheck checks read alignment ratio to the reference beforehand and warns if the ratio is too low; may take a little more time (default: none).  
    --iterativeMap aligns reads to one chromosome and then another rather than directly to the genome, which increases sensitivity while loses precision (default: none).  
-   --misassemblyRemoval detects and then breaks at or removes misassembed regions (default: none). 
+   --misassemblyRemoval detects and then breaks at or removes misassembed regions (default: none).  
    --resume resumes the previous unfinished running from several checkpoints (default: none). 
 
 5. Outputs
