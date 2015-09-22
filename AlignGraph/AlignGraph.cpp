@@ -2358,8 +2358,12 @@ void ref1()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         for(i = 0; i < numChromosomes; i ++)
 	{
-		s = "blat tmp/_extended_contigs." + itoa(i) + ".fa tmp/_short_initial_contigs." + itoa(i) + ".fa -noHead tmp/_short_initial_contigs_extended_contigs." + itoa(i) + ".psl  > blat_doc.txt";
-		system(s.c_str());
+		s = "pblat tmp/_extended_contigs." + itoa(i) + ".fa tmp/_short_initial_contigs." + itoa(i) + ".fa -noHead tmp/_short_initial_contigs_extended_contigs." + itoa(i) + ".psl -threads=8 >> blat_doc.txt 2>> blat_doc.txt";
+		if(system(s.c_str()) != 0)
+		{
+			s = "blat tmp/_extended_contigs." + itoa(i) + ".fa tmp/_short_initial_contigs." + itoa(i) + ".fa -noHead tmp/_short_initial_contigs_extended_contigs." + itoa(i) + ".psl >> blat_doc.txt 2>> blat_doc.txt";
+			system(s.c_str());
+		}
 	}
 
 	seqID = 0;
@@ -2514,8 +2518,12 @@ void ref2(ofstream & e, ofstream & r)
         numChromosomes = readLog();
         for(i = 0; i < numChromosomes; i ++)
         {
-                s = "blat tmp/_post_extended_contigs." + itoa(i) + ".fa tmp/_post_initial_contigs." + itoa(i) + ".fa -noHead tmp/_initial_contigs_extended_contigs." + itoa(i) + ".psl > blat_doc.txt";
-                system(s.c_str());
+                s = "pblat tmp/_post_extended_contigs." + itoa(i) + ".fa tmp/_post_initial_contigs." + itoa(i) + ".fa -noHead tmp/_initial_contigs_extended_contigs." + itoa(i) + ".psl -threads=8 >> blat_doc.txt 2>> blat_doc.txt";
+                if(system(s.c_str()) != 0)
+		{
+			s = "blat tmp/_post_extended_contigs." + itoa(i) + ".fa tmp/_post_initial_contigs." + itoa(i) + ".fa -noHead tmp/_initial_contigs_extended_contigs." + itoa(i) + ".psl >> blat_doc.txt 2>> blat_doc.txt";
+			system(s.c_str());
+		}
         }
 
         in.open("tmp/_contigs.fa");
@@ -2743,8 +2751,12 @@ void refinement(ofstream & e, ofstream & r, int fastMap, int uniqueExtension, in
 	if(fastMap == 1) s0 = " -fastMap "; else s0 = " ";
         for(i = 0; i < numChromosomes; i ++)
         {
-                s = "blat tmp/_extended_contigs." + itoa(i) + ".fa tmp/_short_initial_contigs." + itoa(i) + ".fa -noHead tmp/_short_initial_contigs_extended_contigs." + itoa(i) + ".psl" + s0 + ">> blat_doc.txt";
-                system(s.c_str());
+                s = "pblat tmp/_extended_contigs." + itoa(i) + ".fa tmp/_short_initial_contigs." + itoa(i) + ".fa -noHead tmp/_short_initial_contigs_extended_contigs." + itoa(i) + ".psl" + s0 + "-threads=8 >> blat_doc.txt 2>> blat_doc.txt";
+                if(system(s.c_str()) != 0)
+		{
+			s = "blat tmp/_extended_contigs." + itoa(i) + ".fa tmp/_short_initial_contigs." + itoa(i) + ".fa -noHead tmp/_short_initial_contigs_extended_contigs." + itoa(i) + ".psl" + s0 + ">> blat_doc.txt 2>> blat_doc.txt";
+			system(s.c_str());
+		}
         }
 
         in.open("tmp/_contigs.fa");
@@ -3369,7 +3381,8 @@ void * task0(void * arg)
 	}
 	else
 	{
-		system("bowtie2-build -f tmp/_genome.fa tmp/_genome > bowtie_doc.txt 2> bowtie_doc.txt");
+		command = "bowtie2-build -f tmp/_genome.fa tmp/_genome > bowtie_doc.txt 2> bowtie_doc.txt";
+		system(command.c_str());
 		command = "bowtie2 -f --no-mixed -k 5 -p 8 --local --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min G,5,2 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome.bowtie 2>> bowtie_doc.txt";
 		system(command.c_str());
 		distributeAlignments(ins.numChromosomes);
@@ -3393,8 +3406,16 @@ void * task1(void * arg)
 	if(ins.fastMap == 1) s = " -fastMap "; else s = " ";
 	for(chromosomeID = 0; chromosomeID < ins.numChromosomes; chromosomeID ++)
 	{
-		command = "blat tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_contigs.fa -noHead tmp/_contigs_genome." + itoa(chromosomeID) + ".psl" + s + "> blat_doc.txt";
-		system(command.c_str());
+		command = "pblat tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_contigs.fa -noHead tmp/_contigs_genome." + itoa(chromosomeID) + ".psl" + s + "-threads=8 > blat_doc.txt 2> blat_doc.txt";
+		if(system(command.c_str()) != 0)
+		{
+			command = "blat tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_contigs.fa -noHead tmp/_contigs_genome." + itoa(chromosomeID) + ".psl" + s + "> blat_doc.txt 2> blat_doc.txt";
+			if(system(command.c_str()) != 0)
+			{
+				cout << "BLAT CALL FAILED!" << endl;
+				exit(-1);
+			}
+		}
 	}
 }
 
@@ -3420,7 +3441,8 @@ void nonParallelMap(int distanceLow, int distanceHigh, int numChromosomes, int f
 	}
 	else
 	{
-	        system("bowtie2-build -f tmp/_genome.fa tmp/_genome > bowtie_doc.txt 2> bowtie_doc.txt");
+	        command = "bowtie2-build -f tmp/_genome.fa tmp/_genome > bowtie_doc.txt 2> bowtie_doc.txt";
+		system(command.c_str());
 	        command = "bowtie2 -f --no-mixed -k 5 -p 8 --local --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min G,5,2 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome.bowtie 2>> bowtie_doc.txt";
 	        system(command.c_str());
 	        distributeAlignments(numChromosomes);
@@ -3436,8 +3458,16 @@ void nonParallelMap(int distanceLow, int distanceHigh, int numChromosomes, int f
 //              command = "maf-convert.py psl tmp/_contigs_genome." + itoa(chromosomeID) + ".maf > tmp/_contigs_genome." + itoa(chromosomeID) + ".psl 2>> last_doc.txt";
 //              system(command.c_str());
 
-		command = "blat tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_contigs.fa -noHead tmp/_contigs_genome." + itoa(chromosomeID) + ".psl" + s + "> blat_doc.txt";// -minIdentity=50 -q=dnax -t=dnax
-		system(command.c_str());
+		command = "pblat tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_contigs.fa -noHead tmp/_contigs_genome." + itoa(chromosomeID) + ".psl" + s + "-threads=8 > blat_doc.txt 2> blat_doc.txt";// -minIdentity=50 -q=dnax -t=dnax
+		if(system(command.c_str()) != 0)
+		{
+			command = "blat tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_contigs.fa -noHead tmp/_contigs_genome." + itoa(chromosomeID) + ".psl" + s + "> blat_doc.txt 2> blat_doc.txt";
+			if(system(command.c_str()) != 0)
+			{
+				cout << "BLAT CALL FAILED!" << endl;
+				exit(-1);
+			}
+		}
 	}
 }
 
@@ -3544,17 +3574,22 @@ void checkRatio(int numChromosomes)
 
 void makeAlignment(int distanceLow, int distanceHigh, string id, int fastMap)
 {
-	string command;
+	string command, s;
 
 	command = "bowtie2-build -f tmp/_" + id + "_contigs.fa tmp/_" + id + "_contigs >> bowtie_doc.txt 2>> bowtie_doc.txt";
 	system(command.c_str());
 	command = "bowtie2 -f --no-mixed -k 1 -p 8 -I " + itoa(distanceLow) + " -X " + itoa(distanceHigh) + " --no-discordant -x tmp/_" + id + "_contigs -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_" + id + "_contigs.bowtie 2>> bowtie_doc.txt";
 	system(command.c_str());
 	if(fastMap == 0)
-		command = "blat tmp/_genome.fa tmp/_" + id + "_contigs.fa -noHead tmp/_" + id  + "_contigs_genome.psl >> blat_doc.txt";
+		s = " ";
 	else
-		command = "blat tmp/_genome.fa tmp/_" + id + "_contigs.fa -noHead tmp/_" + id  + "_contigs_genome.psl -fastMap >> blat_doc.txt";
-	system(command.c_str());
+		s = " -fastMap ";
+	command = "pblat tmp/_genome.fa tmp/_" + id + "_contigs.fa -noHead tmp/_" + id  + "_contigs_genome.psl" + s + "-threads=8 >> blat_doc.txt 2>> blat_doc.txt";
+	if(system(command.c_str()) != 0)
+	{
+		command = "blat tmp/_genome.fa tmp/_" + id + "_contigs.fa -noHead tmp/_" + id  + "_contigs_genome.psl" + s + ">> blat_doc.txt 2>> blat_doc.txt";
+		system(command.c_str());
+	}
 }
 
 vector<vector<ContigBase> > loadPreContigs(string id)
@@ -4386,6 +4421,13 @@ void getCheckpoint(ifstream & rcp, int & cp)
         }
 }
 
+void testAligners()
+{
+	if(system("bowtie2 -h > bowtie_doc.txt 2> bowtie_doc.txt") != 0) {cout << "BOWTIE2 CALL FAILED!" << endl; exit(-1);}
+//	if(system("pblat > blat_doc.txt 2> blat_doc.txt") != 0 && system("blat > blat_doc.txt 2> blat_doc.txt") != 0) {cout << "BLAT CALL FAILED!" << endl; exit(-1);}
+//	blat is tested when it is used
+}
+
 int main(int argc, char * argv[])   
 {
 	ifstream r1, r2, c, g, rcmd, rcp;
@@ -4419,6 +4461,7 @@ int main(int argc, char * argv[])
 	cout << "By Ergude Bao, CS Department, UC-Riverside. All Rights Reserved" << endl << endl;
 
 	start = time(NULL);
+	testAligners();
 	wcmd.open("command.txt");
 	if(wcmd.is_open())
 	{
