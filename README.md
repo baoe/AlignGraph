@@ -28,8 +28,8 @@ Bao E, Jiang T, Girke T (2014) AlignGraph: algorithm for secondary de novo genom
 
 2. Installation
 
-   Aligners [Bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) and [BLAT](http://genome.ucsc.edu/FAQ/FAQblat.html) are required to run AlignGraph.  
-   * To use Bowtie2 and BLAT, put them to your $PATH: `export PATH=PATH2BOWTIE2:$PATH` and `export PATH=PATH2BLAT:$PATH`.
+   Aligners [Bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) and [BLAT](http://genome.ucsc.edu/FAQ/FAQblat.html)/[PBLAT](http://icebert.github.io/pblat/) are required to run AlignGraph.  
+   * To use Bowtie2 and BLAT/PBLAT, put them to your $PATH: `export PATH=PATH2BOWTIE2:$PATH` and `export PATH=PATH2BLAT/PBLAT:$PATH`.
    * The downloaded AlignGraph.cpp file can be compiled with command `g++ -o AlignGraph AlignGraph.cpp -lpthread`.
 
 3. Inputs
@@ -90,10 +90,6 @@ Eval-AlignGraph is the evaluation tool distributed with AlignGraph to generate s
 
    You can but it is not recommended, since good alignment cannot be guaranteed with the very short reads and the very large insert length.
 
-3. How many threads are used for Bowtie2?
-
-   8 threads are used. Currently users cannot make changes to this, since this is a moderate choice for either single CPU machines (overhead for parallelization would not be too large) or multiple CPU machines. Another reason is, the bottleneck for the runtime is usually from BLAT, no matter how many threads there are for Bowtie2.
-
 4. Why is there rare or no extension made by AlignGraph?
 
    How much extensions AlignGraph can make is mainly dependent on factors like how close the reference genome and the target genome are, and how well the pre-assembly worked. Therefore, it is possible there is rare or no extension, either because the reference genome is not so similar to the target genome, or because the upstream assemblies are already good enough for the current version of AlignGraph. We are currently working on improving AlignGraph's performance, so that more extensions can be made with a relatively different reference genome, but this may take some time. Besides these, you may want to check the bowtie_doc.txt and blat_doc.txt files to make sure Bowtie2 and BLAT were properly called by AlignGraph. 
@@ -101,6 +97,14 @@ Eval-AlignGraph is the evaluation tool distributed with AlignGraph to generate s
 5. Why could not my run with AlighGraph finish after a long time?
 
    This could be due to the runtime bottleneck of AlignGraph including the BLAT alignment from contigs to reference genome and the sequential processing after the alignment. For the first thing, a suggestion besides specifying the -fastMap option is to combine the reference sequences if the reference genome contains not the complete chromosomes but long contigs/scaffolds. Like FAQ 4 above, it may also take some more time to publish an accelerated version of AlignGraph. Here is a tip for you to estimate how much more time it may still need to finish: if there are outputs on screen like steps (1), (2), (3)..., it means AlignGraph is processing the reference chromosomes one by one and you will know the progress; if not, it means AlignGraph is still doing the alignment and you have to wait for more time.
+
+6. Do I need to put PBLAT to my $PATH?
+
+   PBLAT is the parallelized version of BLAT, so the alignment time can be saved by calling it. AlignGraph tries to call PBLAT first, and if it is not found or it breaks (the current version of PBLAT is not very stable), then AlignGraph calls BLAT instead. Therefore, it is recommended to put PBLAT to $PATH, but this is not a hard requirement.
+
+7. How many threads are used for Bowtie2 and PBLAT?
+
+   8 threads are used. Currently users cannot make changes to this, since this is a moderate choice for either single CPU machines (overhead for parallelization would not be too large) or multiple CPU machines.
 
 <a name="error"/>
 ### Erratum
