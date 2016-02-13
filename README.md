@@ -1,5 +1,5 @@
 ##### Contents
-[NEWS] (#news)
+[LATEST NEWS] (#news)  
 [Overview] (#overview)  
 [Copy right] (#copyright)  
 [How to cite AlignGraph?] (#cite)  
@@ -9,7 +9,7 @@
 [Erratum] (#error)  
 
 <a name="news"/>
-### NEWS
+### LATEST NEWS
 NUCMER is supported to make the contig alignment to reference genome. Though less sensitive and accurate, it is much faster than BLAT and can effectively resolve the runtime bottleneck of BLAT.
 
 <a name="overview"/>
