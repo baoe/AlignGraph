@@ -521,6 +521,213 @@ int parseBLAT(string buf, unsigned int & targetID, unsigned int & targetStart, u
 	}	
 }
 
+void parseDelta(string buf, int & a, int & b, int & c, int & d, int & realA, int & realB)
+{
+        char aBuf[100] = {'\0'}, bBuf[100] = {'\0'}, cBuf[100] = {'\0'}, dBuf[100] = {'\0'}, realABuf[100] = {'\0'}, realBBuf[100] = {'\0'};
+        int item = 0, j0 = 0, j1 = 0, j2 = 0, j3 = 0, rj0 = 0, rj1 = 0, i, aTag, bTag;
+
+        for(i = 0; i < buf.size(); i ++)
+        {
+                if(buf[i] == ' ')
+                {
+                        item ++;
+                        continue;
+                }
+
+                if(buf[i] == '\0') break;
+
+                if(item == 0 && buf[i] != '>')
+                        aBuf[j0 ++] = buf[i];
+                if(item == 1)
+                        bBuf[j1 ++] = buf[i];
+                if(item == 2)
+                        cBuf[j2 ++] = buf[i];
+                if(item == 3)
+                        dBuf[j3 ++] = buf[i];
+        }
+        for(i = 0, aTag = 0; i < 100; i ++)
+        {
+                if(aBuf[i] == '.')
+                {
+                        aTag = 1;
+                        continue;
+                }
+
+                if(aBuf[i] == '\0') break;
+
+                if(aTag == 1)
+                {
+                        realABuf[rj0 ++] = aBuf[i];
+                        aBuf[i] = '\0';
+                }
+        }
+        for(i = 0, bTag = 0; i < 100; i ++)
+        {
+                if(bBuf[i] == '.')
+                {
+                        bTag = 1;
+                        continue;
+                }
+
+                if(bBuf[i] == '\0') break;
+
+                if(bTag == 1)
+                {
+                        realBBuf[rj0 ++] = bBuf[i];
+                        bBuf[i] = '\0';
+                }
+        }
+        a = atoi(aBuf);
+        realA = aTag == 1 ? atoi(realABuf) : -1;
+        b = atoi(bBuf);
+        realB = bTag == 1 ? atoi(realBBuf) : -1;
+        c = atoi(cBuf);
+        d = atoi(dBuf);
+}
+
+void delta2psl(string st0)
+{
+        ifstream in;
+        ofstream out;
+        string st1, buf, align;
+        int i, j, sp, b, targetID, sourceID, targetSize, sourceSize, targetStart, targetEnd, sourceStart, sourceEnd, sourceGap, targetGap, realSourceID, realTargetID, dummyID;
+        char fr;
+        vector<Segment> seg;
+        Segment s;
+
+        in.open(st0.c_str());
+	st1 = st0.substr(0, st0.find('.', st0.find('.', 0) + 1)).append(".psl");
+        out.open(st1.c_str());
+
+        if(in.is_open())
+        {
+                getline(in, buf);
+                getline(in, buf);
+                while(in.good())
+                {
+                        align.clear(); seg.clear(); sourceGap = targetGap = 0;
+                        getline(in, buf);
+                        if(buf[0] == '\0') break;
+
+                        if(buf[0] == '>')
+                        {
+                                parseDelta(buf, targetID, sourceID, targetSize, sourceSize, realTargetID, realSourceID);
+                                getline(in, buf);
+                        }
+                        parseDelta(buf, targetStart, targetEnd, sourceStart, sourceEnd, dummyID, dummyID);
+                        if(sourceStart < sourceEnd)
+                                fr = '+';
+                        else
+                        {
+                                fr = '-';
+                                b = sourceStart;
+                                sourceStart = sourceEnd;
+                                sourceEnd = b;
+                        }
+                        getline(in, buf);
+
+                        //generate alignment string
+                        while(buf[0] != '0')
+                        {
+                                b = atoi(buf.c_str());
+                                for(i = 1; i < abs(b); i ++)
+                                        align.push_back('M');
+                                if(b > 0)
+                                {
+                                        align.push_back('I');
+                                        targetGap ++;
+                                }
+                                else
+                                {
+                                        align.push_back('D');
+                                        sourceGap ++;
+                                }
+                                getline(in, buf);
+                        }
+                        for(i = align.size(); i < (sourceEnd - sourceStart + 1) + targetGap; i ++)
+                                align.push_back('M');
+
+                        //calculate seg
+                        for(i = 0, j = 0; i < align.size(); i ++)
+                        {
+                                if(align[i] != 'I')
+                                        j ++;
+                                if(i == 0 && align[i] == 'M')
+                                {
+                                        s.sourceStart = sourceStart - 1 + j;
+                                        s.targetStart = s.size = -1;
+                                        seg.push_back(s);
+                                }
+                                if(i - 1 >= 0 && (align[i - 1] == 'I' || align[i - 1] == 'D') && align[i] == 'M')
+                                {
+                                        s.sourceStart = sourceStart - 1 + j;
+                                        s.targetStart = s.size = -1;
+                                        seg.push_back(s);
+                                }
+                        }
+                        for(i = 0, j = 0, sp = 0; i < align.size(); i ++)
+                        {
+                                if(align[i] != 'D')
+                                        j ++;
+                                if(i == 0 && align[i] == 'M')
+                                {
+                                        seg[sp ++].targetStart = targetStart - 1 + j;
+                                }
+                                if(i - 1 >= 0 && (align[i - 1] == 'I' || align[i - 1] == 'D') && align[i] == 'M')
+                                {
+                                        seg[sp ++].targetStart = targetStart - 1 + j;
+                                }
+                        }
+                        for(i = 0, j = 0, sp = 0; i < align.size(); i ++)
+                        {
+                                if(align[i] == 'M')
+                                        j ++;
+                                if(i + 1 < align.size() && align[i] == 'M' && (align[i + 1] == 'I' || align[i + 1] == 'D'))
+                                {
+                                        seg[sp ++].size = j;
+                                        j = 0;
+                                }
+                                if(i == align.size() - 1 && align[i] == 'M')
+                                        seg[sp].size = j;
+                        }
+
+                        //write out one psl line
+                        sourceStart --;
+                        targetStart --;
+                        for(i = 0; i < seg.size(); i ++)
+                        {
+                                seg[i].sourceStart --;
+                                seg[i].targetStart --;
+                        }
+                        out << "NA	NA	NA	NA	NA	" << sourceGap << "	NA	" << targetGap << "	" << fr << "	";
+                        if(realSourceID != -1)
+                                out << sourceID << "." << realSourceID << "	";
+                        else
+                                out << sourceID << "	";
+                        out << sourceSize << "	" << sourceStart << "	" << sourceEnd << "	";
+                        if(realTargetID != -1)
+                                out << targetID << "." << realTargetID << "	";
+                        else
+                                out << targetID << "	";
+                        out << targetSize << "	" << targetStart << "	" << targetEnd << "	NA	";
+                        for(i = 0; i < seg.size(); i ++)
+                                out << seg[i].size << ",";
+                        out << "	";
+                        for(i = 0; i < seg.size(); i ++)
+                                out << seg[i].sourceStart << ",";
+                        out << "	";
+                        for(i = 0; i < seg.size(); i ++)
+                                out << seg[i].targetStart << ",";
+                        out << endl;
+                }
+        }
+        else
+        {
+                cout << "CANNOT OPEN FILE!" << endl;
+                exit(-1);
+        }
+}
+
 int keepPositions(vector<Seq> & contigs, unsigned int sourceID, vector<Segment> & segs, double threshold)
 //This is only used to complete the combination of BLAT's local alignments
 {
@@ -969,7 +1176,7 @@ cont:
 //		cout << "*************************" << endl;
 	}
 
-        ofstream out;
+	ofstream out;
         string s = "tmp/_initial_contigs." + itoa(chrID) + ".fa";
         out.open(s.c_str());
 	vector<vector<char> > contigs;
@@ -988,7 +1195,6 @@ cont:
 			contigs.push_back(contig);
 			IDBak = seqs[sp].ID;
 		}
-
 		maxOutputted[maxOutputted.size() - 1] ++;
 		outputted[outputted.size() - 1] = outputted[outputted.size() - 1] + seqs[sp].outputted;
 		for(np = 0; np < seqs[sp].nucleotides.size(); np ++)
@@ -2358,11 +2564,11 @@ void ref1()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         for(i = 0; i < numChromosomes; i ++)
 	{
-		s = "pblat tmp/_extended_contigs." + itoa(i) + ".fa tmp/_short_initial_contigs." + itoa(i) + ".fa -noHead tmp/_short_initial_contigs_extended_contigs." + itoa(i) + ".psl -threads=8 >> blat_doc.txt 2>> blat_doc.txt";
+		s = "pblat tmp/_extended_contigs." + itoa(i) + ".fa tmp/_short_initial_contigs." + itoa(i) + ".fa -noHead tmp/_short_initial_contigs_extended_contigs." + itoa(i) + ".psl -threads=8 > blat_doc.txt 2> blat_doc.txt";
 		if(system(s.c_str()) != 0)
 		{
-			s = "blat tmp/_extended_contigs." + itoa(i) + ".fa tmp/_short_initial_contigs." + itoa(i) + ".fa -noHead tmp/_short_initial_contigs_extended_contigs." + itoa(i) + ".psl >> blat_doc.txt 2>> blat_doc.txt";
-			system(s.c_str());
+			s = "blat tmp/_extended_contigs." + itoa(i) + ".fa tmp/_short_initial_contigs." + itoa(i) + ".fa -noHead tmp/_short_initial_contigs_extended_contigs." + itoa(i) + ".psl > blat_doc.txt 2> blat_doc.txt";
+			if(system(s.c_str()) != 0) {cout << "BLAT CALL FAILED!" << endl; exit(-1);}
 		}
 	}
 
@@ -2518,11 +2724,11 @@ void ref2(ofstream & e, ofstream & r)
         numChromosomes = readLog();
         for(i = 0; i < numChromosomes; i ++)
         {
-                s = "pblat tmp/_post_extended_contigs." + itoa(i) + ".fa tmp/_post_initial_contigs." + itoa(i) + ".fa -noHead tmp/_initial_contigs_extended_contigs." + itoa(i) + ".psl -threads=8 >> blat_doc.txt 2>> blat_doc.txt";
+                s = "pblat tmp/_post_extended_contigs." + itoa(i) + ".fa tmp/_post_initial_contigs." + itoa(i) + ".fa -noHead tmp/_initial_contigs_extended_contigs." + itoa(i) + ".psl -threads=8 > blat_doc.txt 2> blat_doc.txt";
                 if(system(s.c_str()) != 0)
 		{
-			s = "blat tmp/_post_extended_contigs." + itoa(i) + ".fa tmp/_post_initial_contigs." + itoa(i) + ".fa -noHead tmp/_initial_contigs_extended_contigs." + itoa(i) + ".psl >> blat_doc.txt 2>> blat_doc.txt";
-			system(s.c_str());
+			s = "blat tmp/_post_extended_contigs." + itoa(i) + ".fa tmp/_post_initial_contigs." + itoa(i) + ".fa -noHead tmp/_initial_contigs_extended_contigs." + itoa(i) + ".psl > blat_doc.txt 2> blat_doc.txt";
+			if(system(s.c_str()) != 0) {cout << "BLAT CALL FAILED!" << endl; exit(-1);}
 		}
         }
 
@@ -2748,16 +2954,33 @@ void refinement(ofstream & e, ofstream & r, int fastMap, int uniqueExtension, in
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	if(fastMap == 1) s0 = " -fastMap "; else s0 = " ";
-        for(i = 0; i < numChromosomes; i ++)
-        {
-                s = "pblat tmp/_extended_contigs." + itoa(i) + ".fa tmp/_short_initial_contigs." + itoa(i) + ".fa -noHead tmp/_short_initial_contigs_extended_contigs." + itoa(i) + ".psl" + s0 + "-threads=8 >> blat_doc.txt 2>> blat_doc.txt";
-                if(system(s.c_str()) != 0)
+	if(fastMap == 1)
+	{
+//NUCMER
+		for(i = 0; i < numChromosomes; i ++)
 		{
-			s = "blat tmp/_extended_contigs." + itoa(i) + ".fa tmp/_short_initial_contigs." + itoa(i) + ".fa -noHead tmp/_short_initial_contigs_extended_contigs." + itoa(i) + ".psl" + s0 + ">> blat_doc.txt 2>> blat_doc.txt";
-			system(s.c_str());
+			s = "nucmer tmp/_extended_contigs." + itoa(i) + ".fa tmp/_short_initial_contigs." + itoa(i) + ".fa -p tmp/_short_initial_contigs_extended_contigs." + itoa(i) + " > nucmer_doc.txt 2> nucmer_doc.txt";
+			if(system(s.c_str()) != 0) 
+			{
+				s = "touch tmp/_short_initial_contigs_extended_contigs." + itoa(i) + ".delta";
+				system(s.c_str());
+			}
+			s = "tmp/_short_initial_contigs_extended_contigs." + itoa(i) + ".delta"; 
+			delta2psl(s);
 		}
-        }
+	}
+	else
+	{
+	        for(i = 0; i < numChromosomes; i ++)
+	        {
+	                s = "pblat tmp/_extended_contigs." + itoa(i) + ".fa tmp/_short_initial_contigs." + itoa(i) + ".fa -noHead tmp/_short_initial_contigs_extended_contigs." + itoa(i) + ".psl -fastMap -threads=8 > blat_doc.txt 2> blat_doc.txt";
+	                if(system(s.c_str()) != 0)
+			{
+				s = "blat tmp/_extended_contigs." + itoa(i) + ".fa tmp/_short_initial_contigs." + itoa(i) + ".fa -noHead tmp/_short_initial_contigs_extended_contigs." + itoa(i) + ".psl -fastMap > blat_doc.txt 2> blat_doc.txt";
+				if(system(s.c_str()) != 0) {cout << "BLAT CALL FAILED!" << endl; exit(-1);}
+			}
+	        }
+	}
 
         in.open("tmp/_contigs.fa");
         if(in.is_open())
@@ -3375,7 +3598,7 @@ void * task0(void * arg)
 		{
 			command = "bowtie2-build -f tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_genome." + itoa(chromosomeID) + " > bowtie_doc.txt 2> bowtie_doc.txt";
 			system(command.c_str());
-			command = "bowtie2 -f --no-mixed -k 5 -p 8 --local --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min G,5,2 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome." + itoa(chromosomeID) + " -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie 2>> bowtie_doc.txt";
+			command = "bowtie2 -f --no-mixed -k 5 -p 8 --local --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min G,5,2 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome." + itoa(chromosomeID) + " -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie 2> bowtie_doc.txt";
 			system(command.c_str());
 		}
 	}
@@ -3383,7 +3606,7 @@ void * task0(void * arg)
 	{
 		command = "bowtie2-build -f tmp/_genome.fa tmp/_genome > bowtie_doc.txt 2> bowtie_doc.txt";
 		system(command.c_str());
-		command = "bowtie2 -f --no-mixed -k 5 -p 8 --local --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min G,5,2 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome.bowtie 2>> bowtie_doc.txt";
+		command = "bowtie2 -f --no-mixed -k 5 -p 8 --local --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min G,5,2 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome.bowtie 2> bowtie_doc.txt";
 		system(command.c_str());
 		distributeAlignments(ins.numChromosomes);
 	}
@@ -3403,17 +3626,30 @@ void * task1(void * arg)
 	ins.fastMap;
 	ins.iterativeMap;
 
-	if(ins.fastMap == 1) s = " -fastMap "; else s = " ";
-	for(chromosomeID = 0; chromosomeID < ins.numChromosomes; chromosomeID ++)
+	if(ins.fastMap == 1)
 	{
-		command = "pblat tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_contigs.fa -noHead tmp/_contigs_genome." + itoa(chromosomeID) + ".psl" + s + "-threads=8 > blat_doc.txt 2> blat_doc.txt";
-		if(system(command.c_str()) != 0)
+//NUCMER
+		for(chromosomeID = 0; chromosomeID < ins.numChromosomes; chromosomeID ++)
 		{
-			command = "blat tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_contigs.fa -noHead tmp/_contigs_genome." + itoa(chromosomeID) + ".psl" + s + "> blat_doc.txt 2> blat_doc.txt";
+			command = "nucmer tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_contigs.fa -p tmp/_contigs_genome." + itoa(chromosomeID) + " > nucmer_doc.txt 2> nucmer_doc.txt";
+			if(system(command.c_str()) != 0) 
+			{
+				command = "touch tmp/_contigs_genome." + itoa(chromosomeID) + ".delta";
+				system(command.c_str());
+			}
+			command = "tmp/_contigs_genome." + itoa(chromosomeID) + ".delta";
+			delta2psl(command);
+		}
+	}
+	else
+	{
+		for(chromosomeID = 0; chromosomeID < ins.numChromosomes; chromosomeID ++)
+		{
+			command = "pblat tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_contigs.fa -noHead tmp/_contigs_genome." + itoa(chromosomeID) + ".psl -fastMap -threads=8 > blat_doc.txt 2> blat_doc.txt";
 			if(system(command.c_str()) != 0)
 			{
-				cout << "BLAT CALL FAILED!" << endl;
-				exit(-1);
+				command = "blat tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_contigs.fa -noHead tmp/_contigs_genome." + itoa(chromosomeID) + ".psl -fastMap > blat_doc.txt 2> blat_doc.txt";
+				if(system(command.c_str()) != 0) {cout << "BLAT CALL FAILED!" << endl; exit(-1);}
 			}
 		}
 	}
@@ -3435,7 +3671,7 @@ void nonParallelMap(int distanceLow, int distanceHigh, int numChromosomes, int f
 			command = "bowtie2-build -f tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_genome." + itoa(chromosomeID) + " > bowtie_doc.txt 2> bowtie_doc.txt";
 			system(command.c_str());
 			command = "bowtie2 -f --no-mixed -k 5 -p 8 --local --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min G,5,2 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome." + itoa(chromosomeID) + " -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie 2>> bowtie_doc.txt";// --very-sensitive-local
-//			command = "bowtie2 -f --no-mixed -k 5 -p 8 --end-to-end --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min L,-0.24,-0.24 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome." + itoa(chromosomeID) + " -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie 2>> bowtie_doc.txt";
+//			command = "bowtie2 -f --no-mixed -k 5 -p 8 --end-to-end --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min L,-0.24,-0.24 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome." + itoa(chromosomeID) + " -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome." + itoa(chromosomeID) + ".bowtie 2> bowtie_doc.txt";
 			system(command.c_str());
 		}
 	}
@@ -3443,29 +3679,39 @@ void nonParallelMap(int distanceLow, int distanceHigh, int numChromosomes, int f
 	{
 	        command = "bowtie2-build -f tmp/_genome.fa tmp/_genome > bowtie_doc.txt 2> bowtie_doc.txt";
 		system(command.c_str());
-	        command = "bowtie2 -f --no-mixed -k 5 -p 8 --local --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min G,5,2 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome.bowtie 2>> bowtie_doc.txt";
+	        command = "bowtie2 -f --no-mixed -k 5 -p 8 --local --mp 3,1 --rdg 2,1 --rfg 2,1 --score-min G,5,2 -I " + distanceLowStr.str() + " -X " + distanceHighStr.str() + " --no-discordant -x tmp/_genome -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_genome.bowtie 2> bowtie_doc.txt";
 	        system(command.c_str());
 	        distributeAlignments(numChromosomes);
 	}
 
-	if(fastMap == 1) s = " -fastmap "; else s = " ";
-	for(chromosomeID = 0; chromosomeID < numChromosomes; chromosomeID ++)
+	if(fastMap == 1)
 	{
-//              command = "lastdb -c -uMAM8 tmp/_genome." + itoa(chromosomeID) + ".db tmp/_genome." + itoa(chromosomeID) + ".fa > last_doc.txt";
-//              system(command.c_str());
-//              command = "lastal -e34 -m100 tmp/_genome." + itoa(chromosomeID) + ".db tmp/_contigs.fa | last-split > tmp/_contigs_genome." + itoa(chromosomeID) + ".maf 2>> last_doc.txt";
-//              system(command.c_str());
-//              command = "maf-convert.py psl tmp/_contigs_genome." + itoa(chromosomeID) + ".maf > tmp/_contigs_genome." + itoa(chromosomeID) + ".psl 2>> last_doc.txt";
-//              system(command.c_str());
-
-		command = "pblat tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_contigs.fa -noHead tmp/_contigs_genome." + itoa(chromosomeID) + ".psl" + s + "-threads=8 > blat_doc.txt 2> blat_doc.txt";// -minIdentity=50 -q=dnax -t=dnax
-		if(system(command.c_str()) != 0)
+//NUCMER
+		command = "nucmer tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_contigs.fa -p tmp/_contigs_genome." + itoa(chromosomeID) + " > nucmer_doc.txt 2> nucmer_doc.txt";
+		if(system(command.c_str()) != 0) 
 		{
-			command = "blat tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_contigs.fa -noHead tmp/_contigs_genome." + itoa(chromosomeID) + ".psl" + s + "> blat_doc.txt 2> blat_doc.txt";
+			command = "touch tmp/_contigs_genome." + itoa(chromosomeID) + ".delta";
+			system(command.c_str());
+		}
+		command = "tmp/_contigs_genome." + itoa(chromosomeID) + ".delta";
+		delta2psl(command);
+	}
+	else
+	{
+		for(chromosomeID = 0; chromosomeID < numChromosomes; chromosomeID ++)
+		{
+//	              command = "lastdb -c -uMAM8 tmp/_genome." + itoa(chromosomeID) + ".db tmp/_genome." + itoa(chromosomeID) + ".fa > last_doc.txt";
+//	              system(command.c_str());
+//	              command = "lastal -e34 -m100 tmp/_genome." + itoa(chromosomeID) + ".db tmp/_contigs.fa | last-split > tmp/_contigs_genome." + itoa(chromosomeID) + ".maf 2>> last_doc.txt";
+//	              system(command.c_str());
+//	              command = "maf-convert.py psl tmp/_contigs_genome." + itoa(chromosomeID) + ".maf > tmp/_contigs_genome." + itoa(chromosomeID) + ".psl 2>> last_doc.txt";
+//	              system(command.c_str());
+
+			command = "pblat tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_contigs.fa -noHead tmp/_contigs_genome." + itoa(chromosomeID) + ".psl -fastMap -threads=8 > blat_doc.txt 2> blat_doc.txt";// -minIdentity=50 -q=dnax -t=dnax
 			if(system(command.c_str()) != 0)
 			{
-				cout << "BLAT CALL FAILED!" << endl;
-				exit(-1);
+				command = "blat tmp/_genome." + itoa(chromosomeID) + ".fa tmp/_contigs.fa -noHead tmp/_contigs_genome." + itoa(chromosomeID) + ".psl -fastMap > blat_doc.txt 2> blat_doc.txt";
+				if(system(command.c_str()) != 0) {cout << "BLAT CALL FAILED!" << endl; exit(-1);}
 			}
 		}
 	}
@@ -3576,19 +3822,31 @@ void makeAlignment(int distanceLow, int distanceHigh, string id, int fastMap)
 {
 	string command, s;
 
-	command = "bowtie2-build -f tmp/_" + id + "_contigs.fa tmp/_" + id + "_contigs >> bowtie_doc.txt 2>> bowtie_doc.txt";
+	command = "bowtie2-build -f tmp/_" + id + "_contigs.fa tmp/_" + id + "_contigs > bowtie_doc.txt 2> bowtie_doc.txt";
 	system(command.c_str());
-	command = "bowtie2 -f --no-mixed -k 1 -p 8 -I " + itoa(distanceLow) + " -X " + itoa(distanceHigh) + " --no-discordant -x tmp/_" + id + "_contigs -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_" + id + "_contigs.bowtie 2>> bowtie_doc.txt";
+	command = "bowtie2 -f --no-mixed -k 1 -p 8 -I " + itoa(distanceLow) + " -X " + itoa(distanceHigh) + " --no-discordant -x tmp/_" + id + "_contigs -1 tmp/_reads_1.fa -2 tmp/_reads_2.fa --reorder > tmp/_reads_" + id + "_contigs.bowtie 2> bowtie_doc.txt";
+
 	system(command.c_str());
-	if(fastMap == 0)
-		s = " ";
-	else
-		s = " -fastMap ";
-	command = "pblat tmp/_genome.fa tmp/_" + id + "_contigs.fa -noHead tmp/_" + id  + "_contigs_genome.psl" + s + "-threads=8 >> blat_doc.txt 2>> blat_doc.txt";
-	if(system(command.c_str()) != 0)
+	if(fastMap == 1)
 	{
-		command = "blat tmp/_genome.fa tmp/_" + id + "_contigs.fa -noHead tmp/_" + id  + "_contigs_genome.psl" + s + ">> blat_doc.txt 2>> blat_doc.txt";
-		system(command.c_str());
+//NUCMER
+		command = "nucmer tmp/_genome.fa tmp/_" + id + "_contigs.fa -p tmp/_" + id  + "_contigs_genome.delta > nucmer_doc.txt 2> nucmer_doc.txt";
+		if(system(command.c_str()) != 0) 
+		{
+			command = "touch tmp/_" + id  + "_contigs_genome.delta";
+			system(command.c_str());
+		}
+		command = "tmp/_" + id  + "_contigs_genome.delta";
+		delta2psl(command);
+	}
+	else
+	{
+		command = "pblat tmp/_genome.fa tmp/_" + id + "_contigs.fa -noHead tmp/_" + id  + "_contigs_genome.psl -fastMap -threads=8 > blat_doc.txt 2> blat_doc.txt";
+		if(system(command.c_str()) != 0)
+		{
+			command = "blat tmp/_genome.fa tmp/_" + id + "_contigs.fa -noHead tmp/_" + id  + "_contigs_genome.psl -fastMap > blat_doc.txt 2> blat_doc.txt";
+			if(system(command.c_str()) != 0) {cout << "BLAT CALL FAILED!" << endl; exit(-1);}
+		}
 	}
 }
 
@@ -4061,7 +4319,7 @@ void print()
         cout << "--insertVariation is the small variation of insert length (default: 50)" << endl;
         cout << "--coverage is the minimum coverage to keep a path in de Bruijn graph (default: 20)" << endl;
         cout << "--part is the number of parts a chromosome is divided into when it is loaded to reduce memory requirement (default: 1)" << endl;
-        cout << "--fastMap makes BLAT alignment faster to avoid super long time waiting on some data but may lower a little sensitivity of AlignGraph (default: none)" << endl;
+        cout << "--fastMap calls NUCMER to make fast but less sensitive and accurate contig alignment instead of BLAT (default: none)" << endl;
         cout << "--ratioCheck checks read alignment ratio to the reference beforehand and warns if the ratio is too low; may take a little more time (default: none)" << endl;
         cout << "--iterativeMap aligns reads to one chromosome and then another rather than directly to the genome, which increases sensitivity while loses precision (default: none)" << endl;
         cout << "--misassemblyRemoval detects and then breaks at or removes misassembed regions (default: none)" << endl;
@@ -4421,11 +4679,18 @@ void getCheckpoint(ifstream & rcp, int & cp)
         }
 }
 
-void testAligners()
+void testAligners(int tagFastMap)
 {
 	if(system("bowtie2 -h > bowtie_doc.txt 2> bowtie_doc.txt") != 0) {cout << "BOWTIE2 CALL FAILED!" << endl; exit(-1);}
-//	if(system("pblat > blat_doc.txt 2> blat_doc.txt") != 0 && system("blat > blat_doc.txt 2> blat_doc.txt") != 0) {cout << "BLAT CALL FAILED!" << endl; exit(-1);}
-//	blat is tested when it is used
+	if(tagFastMap == 0)	
+	{
+//		if(system("pblat > blat_doc.txt 2> blat_doc.txt") != 0 && system("blat -h > blat_doc.txt 2> blat_doc.txt") != 0) {cout << "BLAT CALL FAILED!" << endl; exit(-1);}
+// BLAT check is left for later when it is running
+	}
+	else
+	{
+		if(system("nucmer -h > nucmer_doc.txt 2> nucmer_doc.txt") != 0) {cout << "NUCMER CALL FAILED!" << endl; exit(-1);}
+	}
 }
 
 int main(int argc, char * argv[])   
@@ -4436,32 +4701,10 @@ int main(int argc, char * argv[])
 	int i, tagRead1 = 0, tagRead2 = 0, tagContig = 0, tagGenome = 0, tagExtendedContig = 0, tagKMer = 0, tagDistanceLow = 0, tagDistanceHigh = 0, tagNoAlignment = 1, k = 5, distanceLow = 0, distanceHigh = MAX, chromosomeID, numChromosomes, coverage = 20, tagCoverage = 0, mrl, mrl1, mrl2, tagInsertVariation = 0, insertVariation = 50, tagRemainingContig = 0, part = 1, tagPart = 0, tagFastMap = 0, numReads, tagRatioCheck = 0, tagUniqueExtension = 0, tagIterativeMap = 0, tagMisassemblyRemoval = 0, tagResume = 0, cp = 0;
 	time_t start, end, startAlign, endAlign;
 
-//	g.open(argv[8]);
-//	numChromosomes = formalizeGenome(g, 1);
-//	c.open(argv[6]);
-//	formalizeInput(c, "tmp/_contigs.fa");
-//	e.open("extended_contigs.fa");
-//	r.open("remaining_contigs.fa");
-//	refinement(e, r, 1, 0, numChromosomes);
-//	return 1;
-
-//	g.open(argv[8]);
-//	formalizeGenome(g, 1);
-//	ext = argv[10];
-///	rmn = argv[12];
-//	distanceLow = atoi(argv[14]);
-//	distanceHigh = atoi(argv[16]);
-//	coverage = atoi(argv[20]);
-//      removeMisassembly(ext, distanceLow, distanceHigh, "extended", coverage, 1);
-///     removeMisassembly(rmn, distanceLow, distanceHigh, "remaining");
-//      cout << endl << "(6) misassemblies removed" << endl;
-//      return 1;
-
 	cout << "AlignGraph: algorithm for secondary de novo genome assembly guided by closely related references" << endl;
 	cout << "By Ergude Bao, CS Department, UC-Riverside. All Rights Reserved" << endl << endl;
 
 	start = time(NULL);
-	testAligners();
 	wcmd.open("command.txt");
 	if(wcmd.is_open())
 	{
@@ -4485,6 +4728,7 @@ int main(int argc, char * argv[])
                 	print();
                 	return 0;
         	}
+		testAligners(tagFastMap);
 
 		system("test -d \"tmp\"; t=$?; if [ $t -eq 1 ]; then mkdir tmp; fi");
 		wcmd.open("tmp/_command.txt");

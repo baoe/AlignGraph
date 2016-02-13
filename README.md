@@ -28,8 +28,8 @@ Bao E, Jiang T, Girke T (2014) AlignGraph: algorithm for secondary de novo genom
 
 2. Installation
 
-   Aligners [Bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) and [BLAT](http://genome.ucsc.edu/FAQ/FAQblat.html)/[PBLAT](http://icebert.github.io/pblat/) are required to run AlignGraph.  
-   * To use Bowtie2 and BLAT/PBLAT, put them to your $PATH: `export PATH=PATH2BOWTIE2:$PATH` and `export PATH=PATH2BLAT/PBLAT:$PATH`.
+   Aligners [Bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) and [BLAT](http://genome.ucsc.edu/FAQ/FAQblat.html)/[PBLAT](http://icebert.github.io/pblat/)/[NUCMER](http://mummer.sourceforge.net/) are required to run AlignGraph.  
+   * To use Bowtie2 and BLAT/PBLAT/NUCMER, put them to your $PATH: `export PATH=PATH2BOWTIE2:$PATH` and `export PATH=PATH2BLAT/PBLAT/NUCMER:$PATH`.
    * The downloaded AlignGraph.cpp file can be compiled with command `g++ -o AlignGraph AlignGraph.cpp -lpthread`.
 
 3. Inputs
@@ -58,7 +58,7 @@ Bao E, Jiang T, Girke T (2014) AlignGraph: algorithm for secondary de novo genom
    --insertVariation is the standard variation of insert length (default: 100).  
    --coverage is the minimum coverage to keep a path in de Bruijn graph (default: 20).  
    --part is the number of parts a chromosome is divided into when it is loaded to reduce memory requirement (default: 1).  
-   --fastMap makes BLAT alignment faster to avoid super long time waiting on some data but may lower a little sensitivity of AlignGraph (default: none).  
+   --fastMap calls NUCMER to make fast but less sensitive and accurate contig alignment instead of BLAT (default: none).  
    --ratioCheck checks read alignment ratio to the reference beforehand and warns if the ratio is too low; may take a little more time (default: none).  
    --iterativeMap aligns reads to one chromosome and then another rather than directly to the genome, which increases sensitivity while loses precision (default: none).  
    --misassemblyRemoval detects and then breaks at or removes misassembed regions (default: none).  
@@ -90,19 +90,18 @@ Eval-AlignGraph is the evaluation tool distributed with AlignGraph to generate s
 
    You can but it is not recommended, since good alignment cannot be guaranteed with the very short reads and the very large insert length.
 
-4. Why is there rare or no extension made by AlignGraph?
+3. Which aligner do I need to put to $PATH: BLAT, PBLAT or NUCMER?
 
-   How much extensions AlignGraph can make is mainly dependent on factors like how close the reference genome and the target genome are, and how well the pre-assembly worked. Therefore, it is possible there is rare or no extension, either because the reference genome is not so similar to the target genome, or because the upstream assemblies are already good enough for the current version of AlignGraph. We are currently working on improving AlignGraph's performance, so that more extensions can be made with a relatively different reference genome, but this may take some time. Besides these, you may want to check the bowtie_doc.txt and blat_doc.txt files to make sure Bowtie2 and BLAT were properly called by AlignGraph. 
+   BLAT and PBLAT are more sensitive and accurate than NUCMER, and PBLAT is the parallelized version of BLAT much faster, so PBLAT should be the first choice. However, the current PBLAT is not stable, so it is highly recommended to put both PBLAT and BLAT to your $PATH, so that AlignGraph can call BLAT instead when PBLAT fails somewhere. If PBLAT and BLAT are too slow to finish, you would have to switch to NUCMER and put it to your $PATH (remember to also specify the -fastMap option in command).
 
-5. Why could not my run with AlighGraph finish after a long time?
+4. Why do I get the error "BLAT CALL FAILED!" even if I have put BLAT to my $PATH?
+   The current version of BLAT (v35) is not compatible with AlignGraph, so you would have to use an earlier version to avoid this error.
 
-   This could be due to the runtime bottleneck of AlignGraph including the BLAT alignment from contigs to reference genome and the sequential processing after the alignment. For the first thing, a suggestion besides specifying the -fastMap option is to combine the reference sequences if the reference genome contains not the complete chromosomes but long contigs/scaffolds. Like FAQ 4 above, it may also take some more time to publish an accelerated version of AlignGraph. Here is a tip for you to estimate how much more time it may still need to finish: if there are outputs on screen like steps (1), (2), (3)..., it means AlignGraph is processing the reference chromosomes one by one and you will know the progress; if not, it means AlignGraph is still doing the alignment and you have to wait for more time.
+5. Why is there rare or no extension made by AlignGraph?
 
-6. Do I need to put PBLAT to my $PATH?
+   How much extensions AlignGraph can make is mainly dependent on factors like how close the reference genome and the target genome are, and how well the pre-assembly worked. Therefore, it is possible there is rare or no extension, either because the reference genome is not so similar to the target genome, or because the upstream assemblies are already good enough for the current version of AlignGraph. We are currently working on improving AlignGraph's performance, so that more extensions can be made with a relatively different reference genome, but this may take some time.
 
-   PBLAT is the parallelized version of BLAT, so the alignment time can be saved by calling it. AlignGraph tries to call PBLAT first, and if it is not found or it breaks (the current version of PBLAT is not very stable), then AlignGraph calls BLAT instead. Therefore, it is recommended to put PBLAT to $PATH, but this is not a hard requirement.
-
-7. How many threads are used for Bowtie2 and PBLAT?
+6. How many threads are used for Bowtie2 and PBLAT?
 
    8 threads are used. Currently users cannot make changes to this, since this is a moderate choice for either single CPU machines (overhead for parallelization would not be too large) or multiple CPU machines.
 
