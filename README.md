@@ -95,6 +95,7 @@ Eval-AlignGraph is the evaluation tool distributed with AlignGraph to generate s
    BLAT and PBLAT are more sensitive and accurate than NUCMER, and PBLAT is the parallelized version of BLAT much faster, so PBLAT should be the first choice. However, the current PBLAT is not stable, so it is highly recommended to put both PBLAT and BLAT to your $PATH, so that AlignGraph can call BLAT instead when PBLAT fails somewhere. If PBLAT and BLAT are too slow to finish, you would have to switch to NUCMER and put it to your $PATH (remember to also specify the -fastMap option in command).
 
 4. Why do I get the error "BLAT CALL FAILED!" even if I have put BLAT to my $PATH?
+
    The current version of BLAT (v35) is not compatible with AlignGraph, so you would have to use an earlier version to avoid this error.
 
 5. Why is there rare or no extension made by AlignGraph?
