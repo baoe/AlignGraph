@@ -1,30 +1,16 @@
-##### Contents
-[LATEST NEWS] (#news)  
-[Overview] (#overview)  
-[Copy right] (#copyright)  
-[How to cite AlignGraph?] (#cite)  
-[Short Manual] (#manual)  
-[Eval-AlignGraph] (#eval)  
-[FAQs] (#faq)  
-[Erratum] (#error)  
-
 ### LATEST NEWS
 NUCMER is supported to make the contig alignment to reference genome. Though less sensitive and accurate, it is much faster than BLAT and can effectively resolve the runtime bottleneck of BLAT.
 
-<a name="overview"/>
 ### Overview
 AlignGraph is a software that extends and joins contigs or scaffolds by reassembling them with help provided by a reference genome of a closely related organism.
 
-<a name="copyright"/>
 ###Copy right
 AlignGraph is under the [Artistic License 2.0](http://opensource.org/licenses/Artistic-2.0).
 
-<a name="cite"/>
 ### How to cite AlignGraph?
 If you use AlignGraph, please cite the following paper:  
 Bao E, Jiang T, Girke T (2014) AlignGraph: algorithm for secondary de novo genome assembly guided by closely related references. Bioinformatics: [epub](http://www.hubmed.org/display.cgi?uids=24932000).
 
-<a name="manual"/>
 ### Short manual
 1. System requirements
 
@@ -80,15 +66,13 @@ Bao E, Jiang T, Girke T (2014) AlignGraph: algorithm for secondary de novo genom
   AlignGraph --read1 reads_1.fa --read2 reads_2.fa --contig contigs.fa --genome genome.fa --distanceLow 100 --distanceHigh 1500 --extendedContig extendedContigs.fa --remainingContig remainingContigs.fa
   ```
 
-<a name="eval"/>
 ### Eval-AlignGraph
 Eval-AlignGraph is the evaluation tool distributed with AlignGraph to generate statistics of the contigs or scaffolds. By default the contigs or scaffolds are aligned to the target genome by BLAT without the -fastMap option, but it can be enabled to avoid super long time waiting on some data with a little sensitivity loss by changing the value of FASTMAP macro from 0 to 1 in the source code.
 
-<a name="faq"/>
 ### FAQs
 1. How can I input multiple libraries with different insert lengths?
 
-   Suppose you have one library x1.fa/y1.fa with insert length I1, and another library x2.fa/y2.fa with insert length I2, then you can simply combine x1.fa and x2.fa into x.fa, combine y1.fa and y2.fa into y.fa, and then input x.fa and y.fa. When you specify --insertLow, let insert length be min{I1, I2}; for --insertHigh, let insert length be max{I1, I2}.
+   Suppose you have one library x1.fa/y1.fa with insert length I1, and another library x2.fa/y2.fa with insert length I2, then you can simply combine x1.fa and x2.fa into x.fa, combine y1.fa and y2.fa into y.fa, and then input x.fa and y.fa. When you specify --distanceLow, let insert length be min{I1, I2}; for --distanceHigh, let insert length be max{I1, I2}.
 
 2. Can I use mate pair libraries?
 
@@ -110,7 +94,6 @@ Eval-AlignGraph is the evaluation tool distributed with AlignGraph to generate s
 
    8 threads are used. Currently users cannot make changes to this, since this is a moderate choice for either single CPU machines (overhead for parallelization would not be too large) or multiple CPU machines.
 
-<a name="error"/>
 ### Erratum
    There is a small error in page i322. See [erratum](http://biocluster.ucr.edu/~ebao/erratum.pdf) for more details.
 
