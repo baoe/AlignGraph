@@ -4,7 +4,7 @@ NUCMER is supported to make the contig alignment to reference genome. Though les
 ### Overview
 AlignGraph is a software that extends and joins contigs or scaffolds by reassembling them with help provided by a reference genome of a closely related organism.
 
-###Copy right
+### Copy right
 AlignGraph is under the [Artistic License 2.0](http://opensource.org/licenses/Artistic-2.0).
 
 ### How to cite AlignGraph?
