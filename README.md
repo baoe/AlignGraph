@@ -84,7 +84,7 @@ Eval-AlignGraph is the evaluation tool distributed with AlignGraph to generate s
 
 4. Why do I get the error "BLAT CALL FAILED!" even if I have put BLAT to my $PATH?
 
-   The current version of BLAT (v35) is not compatible with AlignGraph, so you would have to use an earlier version to avoid this error.
+   The current version of BLAT (v35) is not compatible with AlignGraph, so you would have to use an earlier version (preferably v34) to avoid this error.
 
 5. Why is there rare or no extension made by AlignGraph?
 
