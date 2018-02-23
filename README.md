@@ -18,7 +18,7 @@ Bao E, Jiang T, Girke T (2014) AlignGraph: algorithm for secondary de novo genom
 
 2. Installation
 
-   Aligners [Bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) and [BLAT](http://genome.ucsc.edu/FAQ/FAQblat.html)/[PBLAT](http://icebert.github.io/pblat/)/[NUCMER](http://mummer.sourceforge.net/) are required to run AlignGraph.  
+   Aligners [Bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) and [BLAT](http://genome.ucsc.edu/FAQ/FAQblat.html)/[PBLAT](http://icebert.github.io/pblat/)/[NUCMER](http://mummer.sourceforge.net/)(BLAT's version should be v34 or below) are required to run AlignGraph.  
    * To use Bowtie2 and BLAT/PBLAT/NUCMER, put them to your $PATH: `export PATH=PATH2BOWTIE2:$PATH` and `export PATH=PATH2BLAT/PBLAT/NUCMER:$PATH`.
    * The downloaded AlignGraph.cpp file can be compiled with command `g++ -o AlignGraph AlignGraph.cpp -lpthread`.
 
