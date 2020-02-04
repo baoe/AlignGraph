@@ -1,5 +1,5 @@
 ### LATEST NEWS
-NUCMER is supported to make the contig alignment to reference genome. Though less sensitive and accurate, it is much faster than BLAT and can effectively resolve the runtime bottleneck of BLAT.
+[AlignGraph2](https://github.com/Godotcoffee/AlignGraph2) for improving PacBio long read assemblies is available! Pleae feel free to have a try and give us suggestions and/or comments by sending Shien Huang an email: 19112201@bjtu.edu.cn.
 
 ### Overview
 AlignGraph is a software that extends and joins contigs or scaffolds by reassembling them with help provided by a reference genome of a closely related organism.
